@@ -1,0 +1,10 @@
+--- /Users/yazidhilmi/Documents/cloud/Kalananti-cloud/Academic_Content/B2B/UOB/Async/Middleschool/grupA/dashboard/src/style.css	2026-07-11 22:52:10
++++ /Users/yazidhilmi/Documents/cloud/Kalananti-cloud/Academic_Content/B2B/UOB/Async/Middleschool/grupB/dashboard/src/style.css	2026-07-11 22:52:14
+@@ -2693,6 +2693,7 @@
+   100% { transform: rotate(360deg); }
+ }
+ 
++
+ /* --- Extracted from slide_deck_part1.html --- */
+ .info-grid {
+             display: grid;

@@ -1,0 +1,2588 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIT App Inventor SMP - Data & Privacy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --yellow: #FFE500;
+            --blue: #00C6FF;
+            --black: #1A1A1A;
+            --white: #FFFFFF;
+            --bg-light: #E8E8E8;
+            --green: #00E676;
+            --pink: #FF9DE2;
+            --red: #FF0055;
+            --orange: #FF9800;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            background-image: radial-gradient(#bcbcbc 2px, transparent 2px);
+            background-size: 30px 30px;
+            font-family: 'Fredoka', sans-serif;
+            color: var(--black);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* App Container (Landscape 16:9 Simulator) */
+        .app-container {
+            position: relative; z-index: 10;
+            width: 98vw; max-width: 1400px;
+            height: 98vh; max-height: 900px;
+            display: flex; flex-direction: column;
+        }
+
+        /* Header Layout */
+        .header {
+            display: flex; justify-content: flex-start; align-items: flex-start;
+            padding: 30px 50px 10px;
+            position: relative;
+            width: 100%;
+        }
+        
+        /* Banner Centered at Top */
+        .banner-container { 
+            position: absolute; top: 25px; left: 0; width: 100%;
+            text-align: center; display: flex; flex-direction: column; align-items: center; 
+            z-index: 10; pointer-events: none;
+        }
+        
+        .banner-shape {
+            background-color: var(--blue);
+            padding: 12px 60px;
+            border: 4px solid var(--black);
+            border-radius: 12px;
+            box-shadow: 6px 6px 0px var(--black);
+            display: inline-block;
+        }
+        
+        .banner-text { 
+            font-size: 28px; font-weight: 700; letter-spacing: 2px; color: var(--white); 
+            text-shadow: 2px 2px 0px var(--black), -1px -1px 0px var(--black), 1px -1px 0px var(--black), -1px 1px 0px var(--black), 1px 1px 0px var(--black);
+        }
+        
+        .banner-subtitle {
+            background-color: var(--yellow); 
+            color: var(--black); 
+            padding: 8px 40px; 
+            font-size: 16px; font-weight: 700;
+            border: 3px solid var(--black);
+            border-radius: 20px; 
+            margin-top: -15px; 
+            text-transform: uppercase; letter-spacing: 1px;
+            box-shadow: 4px 4px 0px var(--black);
+            display: inline-block;
+        }
+
+        /* Slides Area */
+        .slides-area {
+            flex: 1; position: relative; margin: 30px 50px 0; perspective: 1200px;
+            min-height: 0; 
+        }
+
+        .slide {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            display: none;
+        }
+        
+        .slide.active { 
+            display: block; 
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.95) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .content-card {
+            background-color: var(--white);
+            border: 4px solid var(--black); 
+            border-radius: 24px;
+            padding: 40px 60px; 
+            box-shadow: 12px 12px 0px var(--black);
+            width: 100%; height: 100%; 
+            overflow-y: auto;
+            display: flex;
+            position: relative;
+        }
+
+        .content-card::-webkit-scrollbar { width: 14px; }
+        .content-card::-webkit-scrollbar-track { background: var(--bg-light); border-left: 3px solid var(--black); border-radius: 0 20px 20px 0; }
+        .content-card::-webkit-scrollbar-thumb { background: var(--blue); border: 3px solid var(--black); border-radius: 10px; }
+
+        /* Decorative corner element */
+        .content-card::after {
+            content: '';
+            position: absolute;
+            top: -15px; right: 30px;
+            width: 40px; height: 40px;
+            background-color: var(--yellow);
+            border: 3px solid var(--black);
+            border-radius: 50%;
+            box-shadow: 4px 4px 0px var(--black);
+            z-index: 5;
+        }
+
+        /* Inner container to restrict line width and center it */
+        .inner-content {
+            max-width: 900px;
+            margin: auto;
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+
+        .slide-title {
+            font-size: 32px; font-weight: 700; color: var(--black); 
+            margin-bottom: 25px; line-height: 1.3;
+            background-color: var(--yellow);
+            display: inline-block;
+            padding: 10px 25px;
+            border: 3px solid var(--black);
+            border-radius: 12px;
+            box-shadow: 5px 5px 0px var(--black);
+        }
+
+        .slide-text { font-size: 22px; line-height: 1.6; color: var(--black); font-weight: 600; }
+        .slide-text p { margin-bottom: 20px; }
+        .slide-text ul { padding-left: 40px; margin-bottom: 20px; }
+        .slide-text li { margin-bottom: 15px; position: relative; list-style-type: none; }
+        .slide-text li::before {
+            content: '▶';
+            color: var(--blue);
+            position: absolute;
+            left: -35px;
+            font-size: 20px;
+            -webkit-text-stroke: 1px var(--black);
+        }
+        
+        .slide-text strong { 
+            color: var(--black); 
+            background-color: var(--blue); 
+            padding: 2px 12px; 
+            border: 3px solid var(--black);
+            border-radius: 8px; 
+            font-weight: 700; 
+            box-shadow: 3px 3px 0px var(--black);
+            display: inline-block;
+            transform: rotate(-1deg);
+        }
+
+        .quote-box {
+            background-color: var(--yellow); 
+            border: 4px solid var(--black);
+            padding: 20px 30px; 
+            border-radius: 16px; 
+            margin: 30px 0; 
+            font-weight: 700; color: var(--black); font-size: 24px;
+            box-shadow: 8px 8px 0px var(--blue);
+            position: relative;
+        }
+
+        /* Navigation Controls */
+        .nav-container {
+            padding: 25px 50px 35px; display: flex; justify-content: space-between; align-items: center;
+            min-height: 100px;
+        }
+
+        .nav-btn {
+            background-color: var(--yellow); 
+            border: 4px solid var(--black);
+            color: var(--black); padding: 12px 35px; border-radius: 30px; cursor: pointer;
+            font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 18px;
+            transition: all 0.1s; display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 6px 6px 0px var(--black);
+        }
+
+        .nav-btn:hover:not(:disabled) { 
+            transform: translate(-2px, -2px); box-shadow: 8px 8px 0px var(--black); 
+            background-color: #FFF033;
+        }
+        
+        .nav-btn:active:not(:disabled) {
+            transform: translate(4px, 4px); box-shadow: 2px 2px 0px var(--black);
+        }
+        
+        .nav-btn:disabled { 
+            background-color: #e0e0e0;
+            color: #888;
+            border-color: #888;
+            box-shadow: 2px 2px 0px #888; 
+            transform: translate(4px, 4px); 
+            cursor: not-allowed; 
+        }
+        
+        .counter-group {
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            background: var(--white);
+            padding: 12px 30px;
+            border: 4px solid var(--black);
+            border-radius: 24px;
+            box-shadow: 6px 6px 0px var(--black);
+            transform: rotate(1deg);
+        }
+
+        .slide-counter { font-size: 18px; font-weight: 700; color: var(--black); }
+
+        .progress-bar-bg {
+            width: 200px; height: 18px; background-color: var(--bg-light); 
+            border: 3px solid var(--black); border-radius: 10px; overflow: hidden;
+            box-shadow: inset 2px 2px 0px rgba(0,0,0,0.1);
+        }
+        
+        .progress-bar {
+            height: 100%; background-color: var(--blue); 
+            border-right: 3px solid var(--black);
+            transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Playground / Mini-App Interactive Style */
+        .playground-card {
+            background: #fdfdfd;
+            border: 3px solid var(--black);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 6px 6px 0px var(--black);
+            text-align: left;
+        }
+
+        .input-text-custom {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 18px;
+            font-family: inherit;
+            border: 3px solid var(--black);
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .btn-action-custom {
+            background-color: var(--blue);
+            color: var(--white);
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 18px;
+            padding: 10px 25px;
+            border: 3px solid var(--black);
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px var(--black);
+            transition: all 0.1s;
+        }
+
+        .btn-action-custom:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 5px 5px 0px var(--black);
+        }
+
+        .btn-action-custom:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px var(--black);
+        }
+
+        .result-box {
+            margin-top: 15px;
+            background-color: var(--black);
+            color: var(--green);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+            font-size: 20px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Quiz Layout */
+        .quiz-option {
+            background-color: var(--white);
+            border: 3px solid var(--black);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin: 10px 0;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px var(--black);
+            transition: all 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .quiz-option:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px var(--black);
+            background-color: #f7f7f7;
+        }
+
+        .quiz-option.correct {
+            background-color: var(--green);
+            color: var(--black);
+        }
+
+        .quiz-option.wrong {
+            background-color: var(--red);
+            color: var(--white);
+        }
+
+        .session-tag {
+            display: inline-block;
+            background-color: var(--black);
+            color: var(--white);
+            border: 3px solid var(--black);
+            border-radius: 999px;
+            padding: 8px 18px;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 18px;
+            box-shadow: 4px 4px 0px var(--blue);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+            margin: 22px 0;
+        }
+
+        .mini-card {
+            background-color: var(--white);
+            border: 3px solid var(--black);
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 5px 5px 0px var(--black);
+        }
+
+        .mini-card h3 {
+            font-size: 21px;
+            margin-bottom: 10px;
+        }
+
+        .mini-card p,
+        .mini-card li {
+            font-size: 19px;
+            line-height: 1.45;
+        }
+
+        .flow-steps {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin: 22px 0;
+        }
+
+        .flow-step {
+            background-color: #FFF9C4;
+            border: 3px solid var(--black);
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: 700;
+            text-align: center;
+            box-shadow: 4px 4px 0px var(--black);
+        }
+
+        .app-screen {
+            background-color: #F3F8FF;
+            border: 4px solid var(--black);
+            border-radius: 18px;
+            padding: 22px;
+            box-shadow: 7px 7px 0px var(--black);
+            margin: 24px 0;
+        }
+
+        .tiny-note {
+            font-size: 17px;
+            line-height: 1.45;
+            background-color: rgba(255, 229, 0, 0.45);
+            border: 3px dashed var(--black);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-top: 16px;
+        }
+
+        .practice-layout {
+            display: grid;
+            grid-template-columns: 0.9fr 1.1fr;
+            gap: 22px;
+            margin: 20px 0;
+            align-items: stretch;
+        }
+
+        .component-list {
+            background: #FFFDE7;
+            border: 3px solid var(--black);
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 5px 5px 0px var(--black);
+        }
+
+        .component-list h3,
+        .block-stack h3 {
+            font-size: 21px;
+            margin-bottom: 12px;
+        }
+
+        .component-pill {
+            display: inline-block;
+            background: var(--white);
+            border: 3px solid var(--black);
+            border-radius: 10px;
+            padding: 7px 10px;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 5px 4px;
+            box-shadow: 3px 3px 0px var(--black);
+        }
+
+        .indent-1 { margin-left: 28px; }
+        .indent-2 { margin-left: 56px; }
+
+        .rubric-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 900px) {
+            .info-grid,
+            .flow-steps,
+            .practice-layout,
+            .rubric-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .content-card {
+                padding: 30px;
+            }
+
+            .slide-title {
+                font-size: 26px;
+            }
+
+            .slide-text {
+                font-size: 19px;
+            }
+        }
+
+        /* Real Flowchart Shapes */
+        .fc-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 15px 0;
+        }
+        .fc-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .fc-node {
+            background-color: var(--white);
+            border: 3px solid var(--black);
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: 700;
+            text-align: center;
+            box-shadow: 4px 4px 0px var(--black);
+            position: relative;
+            z-index: 2;
+            min-width: 140px;
+        }
+        .fc-oval {
+            border-radius: 50px;
+            background-color: #E3F2FD;
+        }
+        .fc-rect {
+            border-radius: 8px;
+            background-color: #FFF8E1;
+        }
+        .fc-para {
+            transform: skew(-15deg);
+            background-color: #E8F5E9;
+            border-radius: 8px;
+            padding: 10px 30px;
+        }
+        .fc-para > span {
+            display: block;
+            transform: skew(15deg);
+        }
+        .fc-diamond-wrapper {
+            position: relative;
+            width: 140px;
+            height: 110px;
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .fc-diamond {
+            position: absolute;
+            width: 80px; height: 80px;
+            background-color: #FCE4EC;
+            border: 3px solid var(--black);
+            transform: rotate(45deg);
+            box-shadow: 4px 4px 0px var(--black);
+            z-index: 1;
+        }
+        .fc-diamond-text {
+            position: relative;
+            z-index: 2;
+            font-size: 15px;
+            font-weight: 700;
+            text-align: center;
+            padding: 5px;
+            max-width: 120px;
+        }
+        .fc-arrow-down {
+            width: 4px; height: 15px;
+            background-color: var(--black);
+            position: relative;
+            margin: 2px 0;
+        }
+        .fc-arrow-down::after {
+            content: '';
+            position: absolute;
+            bottom: -5px; left: -6px;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 10px solid var(--black);
+        }
+        .fc-arrow-right {
+            width: 25px; height: 4px;
+            background-color: var(--black);
+            position: relative;
+            margin: 0 5px;
+        }
+        .fc-arrow-right::after {
+            content: '';
+            position: absolute;
+            right: -5px; top: -6px;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 10px solid var(--black);
+        }
+        .fc-arrow-left {
+            width: 25px; height: 4px;
+            background-color: var(--black);
+            position: relative;
+            margin: 0 5px;
+        }
+        .fc-arrow-left::after {
+            content: '';
+            position: absolute;
+            left: -5px; top: -6px;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-right: 10px solid var(--black);
+        }
+
+        /* ------------------------------------------------------------- */
+        /* UI overrides for ALL phone mockups                            */
+        /* ------------------------------------------------------------- */
+        .phone-mock, .phone-mockup, .ai-phone, .ai2-phone {
+            width: 320px; height: 520px; border: 12px solid #333; border-radius: 24px;
+            background: white; margin: 0 auto; position: relative; overflow: hidden;
+            box-shadow: 6px 6px 0 rgba(0,0,0,0.2); font-family: sans-serif;
+            min-height: auto; padding: 0; display: block;
+        }
+        
+        /* Add a universal status bar to all phones */
+        .phone-mock::before, .phone-mockup::before, .ai-phone::before, .ai2-phone::before {
+            content: "12:00  a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 a0 100%";
+            position: absolute; top: 0; left: 0; right: 0; height: 25px;
+            background: #202124; color: white; font-size: 10px; display: flex; align-items: center; padding: 0 15px; z-index: 10; white-space: pre;
+        }
+        
+        /* Hide existing status bars */
+        .ai-phone-top, .ai2-phone-header, .phone-mockup-top { display: none !important; }
+
+        /* The screen container */
+        .phone-screen, .ai-screen, .ai2-phone-screen {
+            position: absolute; top: 25px; bottom: 0; left: 0; right: 0;
+            padding: 15px; display: flex; flex-direction: column; gap: 15px;
+            background: white; overflow-y: auto; border: none; border-radius: 0; height: auto !important; margin: 0 !important;
+        }
+
+        /* Title bar */
+        .app-title-bar, .ai-titlebar, .ai2-titlebar {
+            background: #1a73e8; color: white; display: flex; align-items: center; justify-content: flex-start; padding-left: 15px; font-weight: bold; font-size: 16px;
+            height: 40px !important; min-height: 40px; margin: 0; width: 100%; border: none; box-shadow: none; border-radius: 0;
+        }
+        
+        /* If title bar is inside screen (Group A) */
+        .phone-screen > .app-title-bar {
+            margin: -15px -15px 0 -15px !important;
+            width: auto;
+        }
+        
+        /* If title bar is sibling of screen (Group B) */
+        .phone-mock > .ai-titlebar, .ai-phone > .ai-titlebar, .phone-mockup > .ai2-titlebar {
+            position: absolute; top: 25px; left: 0; right: 0; z-index: 5;
+        }
+        
+        /* Shift screen down if sibling title bar exists */
+        .ai-phone > .ai-screen, .phone-mockup > .ai2-phone-screen {
+            top: 65px !important;
+        }
+
+        /* Inputs and labels inside phone */
+        .mock-label, .ai-comp-label { color: #000; font-size: 16px; margin: 0; font-weight: normal; }
+        .mock-input, .ai-comp-textbox { border: 1px solid #777; padding: 10px; color: #555; background: #fff; font-size: 14px; border-radius: 0; margin-bottom: 0; }
+        .mock-button, .ai-comp-button { background: #1a73e8; color: white; text-align: center; padding: 12px; border: none; font-weight: bold; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); margin: 0; }
+        .mock-button:hover, .ai-comp-button:hover { background: #1557b0; }
+        .mock-output { background: #f8f9fa; border: 1px dashed #ccc; border-radius: 4px; padding: 12px; min-height: 58px; font-size: 14px; font-weight: normal; color: #333; }
+        .ai-comp-list { border: 1px solid #777; height: 100px; background: white; padding: 5px; font-size: 14px; overflow-y: hidden;}
+
+        /* ------------------------------------------------------------- */
+        /* Block code overrides (App Inventor Accurate Colors & Shapes)  */
+        /* ------------------------------------------------------------- */
+        
+        /* Container Rules */
+        .block-code, .block-wrapper, .block-stack {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; margin-bottom: 20px;
+            background-color: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; color: inherit !important;
+            display: block; line-height: 1.6;
+        }
+
+        .block-code br, .block-wrapper br, .block-stack br { display: block; content: ""; margin-top: 4px; }
+
+        /* Shared block styles */
+        span.block-badge, span.ai-block, span.block-row, span.block-nest, span.block-mit, .block-badge,
+        div.block-row, div.ai-block, div.block-nest, div.block-mit {
+            padding: 6px 12px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.15); 
+            color: white; box-shadow: inset 1px 1px 0 rgba(255,255,255,0.2), 1px 1px 2px rgba(0,0,0,0.3);
+            font-size: 14px; font-weight: bold; line-height: 1.2;
+            font-family: 'Helvetica Neue', Helvetica, sans-serif;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.2);
+        }
+
+        /* Inline blocks */
+        span.block-badge, span.ai-block, span.block-row, span.block-nest, span.block-mit, .block-badge {
+            display: inline-block; vertical-align: middle; margin: 2px 4px 2px 0;
+        }
+
+        /* Block-level rows */
+        div.block-row, div.ai-block, div.block-nest, div.block-mit {
+            display: block; width: max-content; margin: 2px 0;
+        }
+        
+        div[style*="display:flex"] > div.ai-block, div[style*="display: flex"] > div.ai-block {
+            margin: 0;
+        }
+        div[style*="display:flex"], div[style*="display: flex"] {
+            gap: 4px; margin: 2px 0;
+        }
+
+        /* EXACT App Inventor Colors */
+        .block-control, .ai-control { background-color: #B38A36 !important; color: white !important; } 
+        .event, .ai-event { background-color: #C7922D !important; color: white !important; } 
+        .block-logic, .ai-logic, .check { background-color: #77C738 !important; color: white !important; } 
+        .block-math, .ai-math { background-color: #3F71B5 !important; color: white !important; } 
+        .block-text, .ai-text { background-color: #B32D5E !important; color: white !important; } 
+        .block-ui, .ai-variable, .action, .ai-component { background-color: #248641 !important; color: white !important; } 
+        .output, .warn, .ai-method { background-color: #5C2E91 !important; color: white !important; } 
+
+        /* Shapes and Nesting Spines */
+        .ai-event, .event { border-radius: 8px 8px 8px 0 !important; }
+        
+        .ai-component, .block-ui { border-radius: 16px !important; }
+        
+        .ai-nested {
+            border-left: 8px solid #B38A36; padding-left: 8px; margin-left: 4px; border-bottom-left-radius: 6px; margin-top: -2px; padding-top: 2px;
+        }
+
+        .block-row.indent-1 {
+            border-left: 8px solid #B38A36; padding-left: 8px; margin-left: 4px; border-bottom-left-radius: 6px; margin-top: -2px; padding-top: 2px;
+        }
+
+        .block-row.indent-2 {
+            border-left: 8px solid #B38A36; padding-left: 8px; margin-left: 20px; border-bottom-left-radius: 6px; margin-top: -2px; padding-top: 2px;
+        }
+        
+        .block-row.event { margin-bottom: 0; border-bottom-left-radius: 0 !important; }
+        .ai-block.ai-event { margin-bottom: 0; border-bottom-left-radius: 0 !important; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="banner-container">
+                <div class="banner-shape"><div id="banner-title" class="banner-text">APP INVENTOR</div></div>
+                <div id="banner-subtitle" class="banner-subtitle">Materi</div>
+            </div>
+        </div>
+        <div class="slides-area">
+        <div class="slide active" data-title="WELCOME" data-subtitle="Selamat Datang">
+            <div class="content-card">
+                <div class="inner-content">
+                    <div style="text-align: center; margin-top: 100px;">
+                        <h1 style="font-size: 50px; font-weight: 700; margin-bottom: 20px; background-color: var(--yellow); display: inline-block; padding: 20px 40px; border: 5px solid var(--black); border-radius: 16px; box-shadow: 8px 8px 0px var(--black); transform: rotate(-2deg);">Eksplorasi Data Pribadi 🕵️‍♂️</h1>
+                        <p style="font-size: 26px; font-weight: 600; color: var(--black); margin-top: 30px;">Kenali dan Lindungi Identitas Digitalmu di Dunia Maya</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Apa itu Data? 📊</h2>
+        <div class="slide-text">
+            <p>Secara sederhana, data adalah sekumpulan informasi atau fakta.</p><p>Data bisa berupa angka, huruf, gambar, suara, atau kombinasi semuanya.</p><p>Di era komputer saat ini, setiap hal yang kamu lakukan di internet (klik tombol, menonton video) akan menjadi sebuah data.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Data di Dunia Nyata vs Digital 🌐</h2>
+        <div class="slide-text">
+            <p>Di dunia nyata, data adalah berat badanmu, warna rambutmu, atau nilai ujianmu di kertas.</p><p>Di dunia digital, data adalah riwayat pencarian YouTubemu, foto profil Instagram-mu, atau jam berapa kamu login ke game.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Pengertian Data Pribadi 👤</h2>
+        <div class="slide-text">
+            <p><strong>Data Pribadi</strong> adalah informasi khusus yang menunjuk <strong>LANGSUNG</strong> kepadamu.</p><p>Informasi ini bisa membuat orang lain mengenali siapa dirimu, di mana kamu tinggal, dan bagaimana cara menghubungimu.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Mengapa disebut 'Pribadi'? 🛡️</h2>
+        <div class="slide-text">
+            <p>Karena informasi ini adalah milikmu seutuhnya (privat).</p><p>Bayangkan ada 1.000 anak bernama 'Andi' di kotamu. Bagaimana cara membedakan Andi yang satu dengan yang lain? Melalui data pribadinya seperti tanggal lahir atau alamat rumah!</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Analogi: KTP vs Brosur Diskon</h2>
+        <div class="slide-text">
+            <p>Mari bedakan informasi pribadi dan informasi publik.</p>
+            <div style="display: flex; gap: 20px; margin: 30px 0;">
+                <div style="flex: 1; background-color: #E0F7FA; padding: 25px; border: 4px solid var(--black); border-radius: 16px; box-shadow: 6px 6px 0px var(--black);">
+                    <h3 style="font-size: 24px; margin-bottom: 15px;">💳 KTP / Kartu Pelajar</h3>
+                    <p style="font-size: 20px;">KTP berisi nama, alamat, foto. Jika hilang atau disebarkan, orang jahat bisa menyamar menjadi dirimu. Ini murni Data Pribadi.</p>
+                </div>
+                <div style="flex: 1; background-color: #FFF9C4; padding: 25px; border: 4px solid var(--black); border-radius: 16px; box-shadow: 6px 6px 0px var(--black);">
+                    <h3 style="font-size: 24px; margin-bottom: 15px;">📄 Brosur Diskon Sepatu</h3>
+                    <p style="font-size: 20px;">Brosur ini dicetak ribuan lembar dan dibagikan ke semua orang di jalanan. Tidak ada rahasia di sana. Ini bukan Data Pribadi.</p>
+                </div>
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Contoh Data Pribadi (1) - Nama & Tgl Lahir 🎂</h2>
+        <div class="slide-text">
+            <p><strong>1. Nama Lengkap & Nama Ibu Kandung</strong><br>Ini adalah identitas utamamu. Bank sering menggunakan nama ibu kandung untuk verifikasi keamanan.</p><p><strong>2. Tempat & Tanggal Lahir</strong><br>Banyak password yang sayangnya memakai tanggal lahir, sehingga mudah ditebak hacker.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Contoh Data Pribadi (2) - Alamat & Lokasi 📍</h2>
+        <div class="slide-text">
+            <p><strong>3. Alamat Rumah Lengkap</strong><br>Sangat berbahaya jika dibagikan ke orang tak dikenal di internet (ancaman perampokan/penculikan).</p><p><strong>4. Lokasi GPS saat ini (Live Location)</strong><br>Menunjukkan secara persis di mana kamu berdiri detik ini.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Contoh Data Pribadi (3) - Fisik (Biometrik) 👁️</h2>
+        <div class="slide-text">
+            <p><strong>5. Sidik Jari (Fingerprint)</strong><br>Sering dipakai untuk membuka kunci HP.</p><p><strong>6. Scan Wajah (Face ID)</strong><br>Wajahmu adalah kunci sandi alami yang tidak bisa diubah seumur hidup!</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Contoh Data Pribadi (4) - Kontak 📞</h2>
+        <div class="slide-text">
+            <p><strong>7. Nomor HP</strong><br>Jika tersebar, kamu bisa dibanjiri SMS penipuan atau telepon spam setiap hari.</p><p><strong>8. Alamat Email</strong><br>Pintu masuk menuju akun sosial mediamu yang lain.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Mini Kuis 1 🧠</h2>
+        <div class="slide-text">
+            <p style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">Manakah di bawah ini yang merupakan Data Pribadi SENSITIF?</p>
+            
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>Warna kesukaanmu</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'benar')">
+            <span>Nomor Induk Kependudukan (NIK)</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>Merek sepatu yang sering kamu pakai</span>
+        </div>
+        
+            <div id="quiz-feedback" style="display: none; margin-top: 20px; padding: 15px; border: 4px solid var(--black); border-radius: 12px; font-weight: bold; font-size: 20px;"></div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Kenapa Aplikasi Meminta Data Kita? 📱</h2>
+        <div class="slide-text">
+            <p>Saat menginstal aplikasi, kamu sering ditanya: <em>Aplikasi meminta izin mengakses Kontak, Lokasi, dan Kamera</em>.</p><p>Aplikasi butuh datamu agar fiturnya bisa berjalan, tapi kita harus kritis: <strong>Apakah aplikasinya benar-benar butuh data itu?</strong></p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Contoh Izin Wajar: Aplikasi Maps 🗺️</h2>
+        <div class="slide-text">
+            <p>Aplikasi Maps (seperti Google Maps) meminta izin <strong>Lokasi (GPS)</strong>.</p><p>Ini sangat wajar! Karena Maps tidak akan bisa menuntunmu ke sekolah jika dia tidak tahu lokasi awalmu berada.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Contoh Izin Wajar: Aplikasi Ojek Online 🛵</h2>
+        <div class="slide-text">
+            <p>Aplikasi Ojek Online meminta izin <strong>Alamat Rumah</strong> dan <strong>Nomor HP</strong>.</p><p>Ini wajar! Kurir makanan atau driver ojek harus tahu ke mana mengantar makananmu dan bagaimana menelponmu jika tersesat.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Analogi Izin Aplikasi</h2>
+        <div class="slide-text">
+            <p>Mari gunakan logika sederhana:</p>
+            <div style="display: flex; gap: 20px; margin: 30px 0;">
+                <div style="flex: 1; background-color: #E0F7FA; padding: 25px; border: 4px solid var(--black); border-radius: 16px; box-shadow: 6px 6px 0px var(--black);">
+                    <h3 style="font-size: 24px; margin-bottom: 15px;">📷 Aplikasi Kamera</h3>
+                    <p style="font-size: 20px;">Meminta izin mengakses Kamera dan Galeri foto. (WAJAR - untuk mengambil dan menyimpan foto)</p>
+                </div>
+                <div style="flex: 1; background-color: #FFF9C4; padding: 25px; border: 4px solid var(--black); border-radius: 16px; box-shadow: 6px 6px 0px var(--black);">
+                    <h3 style="font-size: 24px; margin-bottom: 15px;">🧮 Aplikasi Kalkulator</h3>
+                    <p style="font-size: 20px;">Meminta izin mengakses Kamera dan Daftar Kontak Telepon. (TIDAK WAJAR - Kalkulator tidak butuh kamera!)</p>
+                </div>
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Aplikasi yang Mencurigakan 🕵️</h2>
+        <div class="slide-text">
+            <p>Jika ada game 'Tebak Angka' tapi minta izin membaca SMS atau melihat Daftar Kontakmu, SEGERA TOLAK (Deny)!</p><p>Itu bisa jadi aplikasi jahat (malware) yang ingin mencuri kontak teman-temanmu untuk dikirimi penipuan.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Mini Kuis 2 🧠</h2>
+        <div class="slide-text">
+            <p style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">Aplikasi apa yang wajar dan masuk akal jika meminta izin mengakses Microphone (Mic)?</p>
+            
+        <div class="quiz-option" onclick="checkQuiz(this, 'benar')">
+            <span>Aplikasi Perekam Suara (Voice Note)</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>Aplikasi Senter HP</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>Aplikasi Kalkulator</span>
+        </div>
+        
+            <div id="quiz-feedback" style="display: none; margin-top: 20px; padding: 15px; border: 4px solid var(--black); border-radius: 12px; font-weight: bold; font-size: 20px;"></div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Tingkat Sensitivitas Data 🌡️</h2>
+        <div class="slide-text">
+            <p>Tidak semua datamu berharga sama di mata hacker. Ada data yang biasa saja, ada yang sangat rahasia.</p><p>Kita membaginya menjadi dua: <strong>Data Publik</strong> dan <strong>Data Sensitif</strong>.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Data Publik (Boleh Dibagikan) 🟢</h2>
+        <div class="slide-text">
+            <p>Data Publik adalah informasi yang aman diketahui orang banyak.</p><ul><li>Nama panggilan atau username (gamer tag).</li><li>Hobi atau makanan favorit.</li><li>Band atau film kesukaan.</li></ul><p>Data ini tidak bisa dipakai untuk meretas akunmu.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Data Sensitif (Rahasia Besar) 🔴</h2>
+        <div class="slide-text">
+            <p>Data Sensitif adalah informasi krusial yang bisa disalahgunakan.</p><ul><li>Password dan PIN ATM.</li><li>Kode OTP (One Time Password) dari SMS.</li><li>Nama ibu kandung dan detail alamat.</li></ul><p>Data ini HARUS dijaga sekuat tenaga!</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Analogi: Mading vs Brankas Besi</h2>
+        <div class="slide-text">
+            <p>Perlakukan datamu seperti barang fisik:</p>
+            <div style="display: flex; gap: 20px; margin: 30px 0;">
+                <div style="flex: 1; background-color: #E0F7FA; padding: 25px; border: 4px solid var(--black); border-radius: 16px; box-shadow: 6px 6px 0px var(--black);">
+                    <h3 style="font-size: 24px; margin-bottom: 15px;">📌 Papan Mading (Publik)</h3>
+                    <p style="font-size: 20px;">Tempat menempel puisi, daftar pemenang lomba, atau pengumuman. Semua orang boleh lihat. (Data Publik)</p>
+                </div>
+                <div style="flex: 1; background-color: #FFF9C4; padding: 25px; border: 4px solid var(--black); border-radius: 16px; box-shadow: 6px 6px 0px var(--black);">
+                    <h3 style="font-size: 24px; margin-bottom: 15px;">🔒 Brankas Besi (Sensitif)</h3>
+                    <p style="font-size: 20px;">Tempat menyimpan uang, perhiasan, dan dokumen rumah. Dikunci dengan sandi rahasia. (Data Sensitif)</p>
+                </div>
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Mini Kuis 3 🧠</h2>
+        <div class="slide-text">
+            <p style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">Di manakah sebaiknya kamu menaruh 'Password Akun Game'-mu?</p>
+            
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>Di profil Bio Instagram (Publik)</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'benar')">
+            <span>Di catatan/brankas yang aman (Sensitif)</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>Di grup WhatsApp kelas (Publik)</span>
+        </div>
+        
+            <div id="quiz-feedback" style="display: none; margin-top: 20px; padding: 15px; border: 4px solid var(--black); border-radius: 12px; font-weight: bold; font-size: 20px;"></div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="MIT App Inventor">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Praktek: Designer Form Biodata</h2>
+        <div class="slide-text">
+            <p>Dalam membuat aplikasi yang butuh data, desainlah UI yang jelas menggunakan komponen ini:</p>
+            <div style="display: flex; gap: 40px; margin-top: 30px; align-items: center;">
+                <!-- Phone Mockup -->
+                <div class="ai-phone">
+                    <div class="ai-phone-top"><span>12:00</span><span>🔋 100%</span></div>
+                    <div class="ai-titlebar">Screen1</div>
+                    <div class="ai-screen">
+                        
+    <div class="ai-comp-label">Nama Lengkap (Wajib):</div>
+    <div class="ai-comp-textbox">TextBox_Nama</div>
+    <div class="ai-comp-label">Username Game:</div>
+    <div class="ai-comp-textbox">TextBox_Username</div>
+    <div class="ai-comp-button" style="background:#1a73e8; color:white;">Simpan Biodata</div>
+    
+                    </div>
+                </div>
+                <!-- Explanation -->
+                <div style="flex: 1; background-color: var(--bg-light); border: 4px dashed var(--black); padding: 25px; border-radius: 16px;">
+                    <h3 style="margin-bottom: 15px;">Komponen UI MIT App Inventor</h3>
+                    <ul style="font-size: 20px;">
+                        <li><strong>TextBox:</strong> Tempat User mengetik (Input)</li>
+                        <li><strong>Button:</strong> Tombol untuk diklik pengguna</li>
+                        <li><strong>Label:</strong> Teks statis atau untuk hasil (Output)</li>
+                        <li><strong>TinyDB (Non-visible):</strong> Basis data penyimpanan.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="MIT App Inventor">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Praktek: Blok Menyimpan Input</h2>
+        <div class="slide-text">
+            <p>Contoh blok sederhana untuk mengambil data dari TextBox saat tombol diklik.</p>
+            <div style="margin-top: 30px; background-color: #f8f9fa; border: 4px solid var(--black); border-radius: 16px; padding: 30px; box-shadow: 8px 8px 0px var(--black); overflow-x: auto;">
+                <h3 style="margin-bottom: 20px; color: #555;">Block Editor Workspace</h3>
+                
+    <div class="block-wrapper">
+        <div class="ai-block ai-event">when ButtonSimpan.Click do</div>
+        <div class="ai-nested">
+            <div style="display:flex; align-items:center;">
+                <div class="ai-block ai-variable">set global namaUser to</div>
+                <div class="ai-block ai-component" style="margin-left: 10px;">TextBox_Nama.Text</div>
+            </div>
+            <div style="display:flex; align-items:center;">
+                <div class="ai-block ai-component">set LabelHasil.Text to</div>
+                <div class="ai-block ai-text" style="margin-left: 10px;">"Data berhasil disimpan!"</div>
+            </div>
+        </div>
+    </div>
+    
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Eksplorasi Data Pribadi" data-subtitle="Misi 1: Misteri Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Kesimpulan Misi 1 🎯</h2>
+        <div class="slide-text">
+            <p>Selamat! Kamu telah mengenali apa itu data pribadi, membedakan mana yang publik dan sensitif, serta memahami kenapa aplikasi meminta izin datamu.</p><p>Sebagai pembuat aplikasi di masa depan, kamu harus menghormati privasi user-mu!</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <div style="text-align: center; margin-top: 100px;">
+            <h1 style="font-size: 50px; font-weight: 700; margin-bottom: 20px; background-color: var(--yellow); display: inline-block; padding: 20px 40px; border: 5px solid var(--black); border-radius: 16px; box-shadow: 8px 8px 0px var(--black); transform: rotate(-2deg);">Etika & Tanggung Jawab Digital 🛡️</h1>
+            <p style="font-size: 26px; font-weight: 600; color: var(--black); margin-top: 30px;">Apa Dampaknya Jika Datamu Jatuh ke Tangan Hacker?</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Apa yang Terjadi Jika Data Bocor? 😱</h2>
+        <div class="slide-text">
+            <p>Pernahkah kamu mendengar berita jutaan data pengguna e-commerce bocor di internet?</p><p>Jika data sensitifmu bocor, orang-orang tak bertanggung jawab bisa melakukan <strong>Penyalahgunaan Data (Data Misuse)</strong>.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Dampak 1: Pencurian Identitas 🎭</h2>
+        <div class="slide-text">
+            <p>Hacker menggunakan foto wajahmu dan nama lengkapmu untuk membuat akun media sosial palsu.</p><p>Lalu, akun palsu itu digunakan untuk menipu orang lain, seolah-olah itu adalah dirimu! Reputasimu akan hancur.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Dampak 2: Kerugian Finansial 💸</h2>
+        <div class="slide-text">
+            <p>Jika penipu mendapatkan nomor HP dan informasi nama ibu kandungmu, mereka bisa menelepon bank dan meretas rekening orang tuamu.</p><p>Uang tabungan bisa ludes dalam hitungan menit akibat satu keteledoran kecil.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Contoh Kasus: 'Mama Minta Pulsa' 📩</h2>
+        <div class="slide-text">
+            <p>Penipuan klasik lewat SMS atau WhatsApp seperti 'Kirimkan uang ke rekening ini, mama sedang di kantor polisi' terjadi karena nomor HP-mu tersebar di internet.</p><p>Penipu mendapatkan datamu dari website yang keamanannya lemah.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Analogi: Kunci Rumah Asing</h2>
+        <div class="slide-text">
+            <p>Memberikan password di internet itu seperti:</p>
+            <div style="display: flex; gap: 20px; margin: 30px 0;">
+                <div style="flex: 1; background-color: #E0F7FA; padding: 25px; border: 4px solid var(--black); border-radius: 16px; box-shadow: 6px 6px 0px var(--black);">
+                    <h3 style="font-size: 24px; margin-bottom: 15px;">🔑 Memberi Kunci ke Orang Asing</h3>
+                    <p style="font-size: 20px;">Kamu bertemu orang di stasiun, lalu memberinya alamat lengkap dan kunci rumahmu.</p>
+                </div>
+                <div style="flex: 1; background-color: #FFF9C4; padding: 25px; border: 4px solid var(--black); border-radius: 16px; box-shadow: 6px 6px 0px var(--black);">
+                    <h3 style="font-size: 24px; margin-bottom: 15px;">😱 Akibatnya?</h3>
+                    <p style="font-size: 20px;">Saat kamu pergi sekolah, orang itu akan masuk ke rumahmu dan mengambil TV serta komputermu dengan mudah.</p>
+                </div>
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Dampak 3: Ancaman Keselamatan Fisik 🏃</h2>
+        <div class="slide-text">
+            <p>Banyak remaja suka melakukan 'Live Location' atau update status <em>'Lagi sendirian nih di Cafe X'</em>.</p><p>Ini sangat berbahaya! Orang jahat (penguntit/penculik) bisa mengetahui posisi persismu dan merencanakan kejahatan di dunia nyata.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Bahaya Oversharing di Medsos 📱</h2>
+        <div class="slide-text">
+            <p><strong>Oversharing</strong> adalah kebiasaan membagikan terlalu banyak detail hidup pribadi di internet.</p><p>Ingat, Jejak Digital (Digital Footprint) itu abadi. Sesuatu yang sudah di-upload ke internet sangat sulit untuk benar-benar dihapus secara permanen.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Mini Kuis 4 🧠</h2>
+        <div class="slide-text">
+            <p style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">Jika ada seseorang menelepon mengaku dari pihak Bank dan meminta nomor PIN ATM-mu, apa yang harus kamu lakukan?</p>
+            
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>Berikan PIN-nya agar masalah cepat selesai</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'benar')">
+            <span>Matikan telepon, Bank tidak pernah meminta PIN nasabah</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>Berikan setengah PIN saja</span>
+        </div>
+        
+            <div id="quiz-feedback" style="display: none; margin-top: 20px; padding: 15px; border: 4px solid var(--black); border-radius: 12px; font-weight: bold; font-size: 20px;"></div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Cara Melindungi Privasi Kita 🛡️</h2>
+        <div class="slide-text">
+            <p>Setelah tahu bahayanya, lalu bagaimana cara kita membela diri di dunia digital?</p><p>Ada 4 langkah utama pelindung privasi yang bisa kamu terapkan hari ini juga!</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Langkah 1: Password Super Kuat 🔑</h2>
+        <div class="slide-text">
+            <p>Jangan gunakan tanggal lahir, nama sendiri, atau angka berurutan seperti '123456' untuk password.</p><p>Gunakan kombinasi <strong>Huruf Besar, Huruf Kecil, Angka, dan Simbol Khusus (@, #, !).</strong></p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Contoh Password Buruk vs Baik ⚖️</h2>
+        <div class="slide-text">
+            <p>❌ <strong>Buruk:</strong> andi2010, sayangmama, 12345678</p><p>✅ <strong>Baik:</strong> <em>M4kanNasiG0r3ng_EnaK!</em> (Panjang, unik, mudah diingat olehmu tapi mustahil ditebak komputer).</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Langkah 2: Jangan Asal Klik Link 🎣</h2>
+        <div class="slide-text">
+            <p>Hacker sering menyebar link pishing (kail pancing) di WhatsApp: <em>'Klik link ini untuk dapat Kuota 100GB Gratis!'</em></p><p>Jika kamu klik, mereka bisa menyusupkan virus ke HP-mu atau mencuri password Instagram-mu.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Langkah 3: Gembok Akun Medsos 🔒</h2>
+        <div class="slide-text">
+            <p>Atur akun Instagram, TikTok, atau Facebook-mu menjadi <strong>Private Account</strong>.</p><p>Dengan begitu, hanya orang-orang yang kamu setujui (teman dunia nyata) yang bisa melihat foto dan videomu.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Langkah 4: Matikan Izin Lokasi 📍</h2>
+        <div class="slide-text">
+            <p>Jika kamu sedang tidak menggunakan aplikasi Peta atau Ojek Online, matikan fitur GPS (Location) di HP-mu.</p><p>Jangan biarkan aplikasi merekam ke mana saja kamu pergi selama 24 jam nonstop.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Analogi: Mengunci Pintu & Jendela</h2>
+        <div class="slide-text">
+            <p>Bagaimana kita menjaga rumah digital kita?</p>
+            <div style="display: flex; gap: 20px; margin: 30px 0;">
+                <div style="flex: 1; background-color: #E0F7FA; padding: 25px; border: 4px solid var(--black); border-radius: 16px; box-shadow: 6px 6px 0px var(--black);">
+                    <h3 style="font-size: 24px; margin-bottom: 15px;">🚪 Pintu Terbuka Lebar</h3>
+                    <p style="font-size: 20px;">Password mudah ditebak (12345) dan akun publik. Pencuri tinggal melenggang masuk.</p>
+                </div>
+                <div style="flex: 1; background-color: #FFF9C4; padding: 25px; border: 4px solid var(--black); border-radius: 16px; box-shadow: 6px 6px 0px var(--black);">
+                    <h3 style="font-size: 24px; margin-bottom: 15px;">🔒 Gembok Ganda (2FA)</h3>
+                    <p style="font-size: 20px;">Password kuat + Kode OTP SMS (Two-Factor Authentication). Pencuri tak akan bisa menjebolnya!</p>
+                </div>
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Mini Kuis 5 🧠</h2>
+        <div class="slide-text">
+            <p style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">Manakah password di bawah ini yang paling kuat dan aman dari serangan hacker?</p>
+            
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>12345678</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>namakucingku</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'benar')">
+            <span>G@r0d4_B1rU!99</span>
+        </div>
+        
+            <div id="quiz-feedback" style="display: none; margin-top: 20px; padding: 15px; border: 4px solid var(--black); border-radius: 12px; font-weight: bold; font-size: 20px;"></div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Fitur Privasi di App Inventor 🛠️</h2>
+        <div class="slide-text">
+            <p>Sebagai pembuat aplikasi, KITA punya tanggung jawab menjaga pengguna.</p><p>Jika kita membuat fitur Login, kita harus memastikan input password tidak terlihat (tertutup bintang-bintang) agar tidak diintip orang di sebelah pengguna.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Kenapa Aplikasi Harus Aman? 🤝</h2>
+        <div class="slide-text">
+            <p>Jika aplikasi buatanmu terbukti aman dan menjaga data pengguna dengan baik, orang akan percaya dan mau mengunduh aplikasimu (Trust).</p><p>Kepercayaan pengguna adalah harta paling berharga bagi seorang Developer.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="MIT App Inventor">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Designer: Form Login Aman</h2>
+        <div class="slide-text">
+            <p>Centang fitur 'Password' pada TextBox agar teks yang diketik berubah menjadi bulatan hitam.</p>
+            <div style="display: flex; gap: 40px; margin-top: 30px; align-items: center;">
+                <!-- Phone Mockup -->
+                <div class="ai-phone">
+                    <div class="ai-phone-top"><span>12:00</span><span>🔋 100%</span></div>
+                    <div class="ai-titlebar">Screen1</div>
+                    <div class="ai-screen">
+                        
+    <div class="ai-comp-label">Username:</div>
+    <div class="ai-comp-textbox">TextBox_User</div>
+    <div class="ai-comp-label">Password Rahasia:</div>
+    <div class="ai-comp-textbox" style="background:#ddd; letter-spacing: 2px;">•••••••••••</div>
+    <div class="ai-comp-button" style="background: #11943c; color: white; margin-top:10px;">LOGIN AMAN</div>
+    <div class="ai-comp-label" style="color:red; font-size: 14px; margin-top:5px; font-weight:bold;">Label_Peringatan</div>
+    
+                    </div>
+                </div>
+                <!-- Explanation -->
+                <div style="flex: 1; background-color: var(--bg-light); border: 4px dashed var(--black); padding: 25px; border-radius: 16px;">
+                    <h3 style="margin-bottom: 15px;">Komponen UI MIT App Inventor</h3>
+                    <ul style="font-size: 20px;">
+                        <li><strong>TextBox:</strong> Tempat User mengetik (Input)</li>
+                        <li><strong>Button:</strong> Tombol untuk diklik pengguna</li>
+                        <li><strong>Label:</strong> Teks statis atau untuk hasil (Output)</li>
+                        <li><strong>TinyDB (Non-visible):</strong> Basis data penyimpanan.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Keamanan Form Login 🚦</h2>
+        <div class="slide-text">
+            <p>Selain menyembunyikan teks sandi, aplikasi harus mengecek: <em>Apakah pengguna menekan tombol Login tanpa mengisi password?</em></p><p>Kita harus mencegah form kosong diproses (disebut <strong>Input Validation</strong>).</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="MIT App Inventor">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Blocks: Validasi Password</h2>
+        <div class="slide-text">
+            <p>Blok logika untuk memastikan password tidak dibiarkan kosong.</p>
+            <div style="margin-top: 30px; background-color: #f8f9fa; border: 4px solid var(--black); border-radius: 16px; padding: 30px; box-shadow: 8px 8px 0px var(--black); overflow-x: auto;">
+                <h3 style="margin-bottom: 20px; color: #555;">Block Editor Workspace</h3>
+                
+    <div class="block-wrapper">
+        <div class="ai-block ai-event">when ButtonLogin.Click do</div>
+        <div class="ai-nested">
+            <div class="ai-block ai-control">if</div>
+            <div style="margin-left:20px; display:flex; gap: 10px; align-items:center;">
+                <div class="ai-block ai-math">is empty</div>
+                <div class="ai-block ai-component">TextBox_Pass.Text</div>
+            </div>
+            <div class="ai-block ai-control">then</div>
+            <div style="margin-left:20px; display:flex; align-items:center;">
+                <div class="ai-block ai-component">set Label_Peringatan.Text to</div>
+                <div class="ai-block ai-text">"Error: Password kosong!"</div>
+            </div>
+        </div>
+    </div>
+    
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Penjelasan Blok Validasi 💡</h2>
+        <div class="slide-text">
+            <p>Blok <strong>is empty</strong> (dari laci warna Text) bertugas mengecek apakah sebuah TextBox tidak memiliki huruf sama sekali (kosong).</p><p>Jika benar kosong (then), aplikasi akan menampilkan peringatan Error warna merah.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Mini Kuis 6 🧠</h2>
+        <div class="slide-text">
+            <p style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">Mengapa kita menggunakan blok 'is empty' saat memproses form Login?</p>
+            
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>Untuk menghapus password pengguna</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'benar')">
+            <span>Untuk mencegah pengguna mengirim form jika belum mengisi password</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>Untuk mengecek apakah HP kehabisan baterai</span>
+        </div>
+        
+            <div id="quiz-feedback" style="display: none; margin-top: 20px; padding: 15px; border: 4px solid var(--black); border-radius: 12px; font-weight: bold; font-size: 20px;"></div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Etika & Tanggung Jawab Digital" data-subtitle="Misi 2: Melawan Ancaman">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Kesimpulan Misi 2 🎯</h2>
+        <div class="slide-text">
+            <p>Kamu sudah belajar bahaya oversharing, cara membuat password super, dan bagaimana mencegah hacker masuk ke kehidupan digitalmu.</p><p>Tidak hanya itu, kamu juga belajar membuat sistem Login yang menolak data kosong di App Inventor!</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <div style="text-align: center; margin-top: 100px;">
+            <h1 style="font-size: 50px; font-weight: 700; margin-bottom: 20px; background-color: var(--yellow); display: inline-block; padding: 20px 40px; border: 5px solid var(--black); border-radius: 16px; box-shadow: 8px 8px 0px var(--black); transform: rotate(-2deg);">Penyimpanan Data (TinyDB) 💾</h1>
+            <p style="font-size: 26px; font-weight: 600; color: var(--black); margin-top: 30px;">Mengajari Aplikasi Untuk Mengingat Datamu Selamanya</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Masalah Data Hilang di Aplikasi 🚨</h2>
+        <div class="slide-text">
+            <p>Saat kamu bermain game di App Inventor, aplikasimu bisa menghitung skor dengan baik menggunakan Variabel.</p><p>TAPI... saat pengguna menutup aplikasi dan membukanya lagi esok hari, apa yang terjadi?</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Kelemahan Variabel Global ☁️</h2>
+        <div class="slide-text">
+            <p>Semua skor dan level yang disimpan di dalam <em>Global Variable</em> akan TER-RESET kembali menjadi nilai awal (misalnya 0) setiap kali aplikasi tertutup.</p><p>Variabel itu sangat pelupa!</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Apa yang Terjadi Jika Baterai Habis? 🔋</h2>
+        <div class="slide-text">
+            <p>Bayangkan kamu sudah mencapai Level 99 dengan susah payah. Tiba-tiba baterai HP habis.</p><p>Saat di-charge dan dinyalakan, game-mu kembali ke Level 1 karena datanya hanya ada di Variabel. Sangat membuat frustrasi, bukan?</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Analogi: Ingatan vs Catatan Tinta</h2>
+        <div class="slide-text">
+            <p>Perbedaan Variabel dan Database:</p>
+            <div style="display: flex; gap: 20px; margin: 30px 0;">
+                <div style="flex: 1; background-color: #E0F7FA; padding: 25px; border: 4px solid var(--black); border-radius: 16px; box-shadow: 6px 6px 0px var(--black);">
+                    <h3 style="font-size: 24px; margin-bottom: 15px;">☁️ Ingatan Otak (Variabel)</h3>
+                    <p style="font-size: 20px;">Kamu melihat pelat nomor mobil. Jika kamu tidur, besoknya nomor itu menguap dari ingatan. (Data Sementara)</p>
+                </div>
+                <div style="flex: 1; background-color: #FFF9C4; padding: 25px; border: 4px solid var(--black); border-radius: 16px; box-shadow: 6px 6px 0px var(--black);">
+                    <h3 style="font-size: 24px; margin-bottom: 15px;">📒 Buku Catatan (Database)</h3>
+                    <p style="font-size: 20px;">Kamu menulis nomor itu di buku tebal dengan tinta. Besoknya, tahun depannya, tulisan itu tetap ada! (Data Permanen)</p>
+                </div>
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Solusinya: Database Lokal 💾</h2>
+        <div class="slide-text">
+            <p>Agar data tidak hilang saat HP dimatikan, kita membutuhkan memori permanen.</p><p>Di dunia aplikasi, kita menyebutnya <strong>Database Lokal</strong> (Penyimpanan basis data di dalam memori fisik HP, tanpa butuh kuota internet).</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Keuntungan Database Lokal 🏆</h2>
+        <div class="slide-text">
+            <ul><li><strong>Offline:</strong> Bisa digunakan tanpa koneksi internet/WiFi.</li><li><strong>Cepat:</strong> Kecepatan baca dan tulis datanya instan.</li><li><strong>Permanen:</strong> Data tidak akan hilang kecuali aplikasinya di-uninstall (dihapus dari HP).</li></ul>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Berkenalan dengan TinyDB! 🐘</h2>
+        <div class="slide-text">
+            <p>Di App Inventor, database lokal kebanggaan kita bernama <strong>TinyDB</strong>.</p><p>'Tiny' artinya kecil, dan 'DB' adalah singkatan dari DataBase. Sebuah database ringan yang sangat kuat untuk menyimpan teks, angka, dan list!</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Sifat Non-Visible Component 👻</h2>
+        <div class="slide-text">
+            <p>Berbeda dengan Button atau TextBox yang terlihat jelas di layar, TinyDB adalah komponen yang bekerja di belakang layar (Non-Visible).</p><p>Saat ditarik ke layar HP, ia akan muncul di bagian bawah luar layar HP pada mode Designer.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="MIT App Inventor">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Designer: Memasukkan TinyDB</h2>
+        <div class="slide-text">
+            <p>TinyDB terletak di dalam laci kategori 'Storage'.</p>
+            <div style="display: flex; gap: 40px; margin-top: 30px; align-items: center;">
+                <!-- Phone Mockup -->
+                <div class="ai-phone">
+                    <div class="ai-phone-top"><span>12:00</span><span>🔋 100%</span></div>
+                    <div class="ai-titlebar">Screen1</div>
+                    <div class="ai-screen">
+                        
+    <div class="ai-comp-label" style="text-align: center; color: #1a73e8; font-weight:bold; margin-bottom: 20px;">Layar Screen1</div>
+    <div class="ai-comp-label" style="font-size:14px;">Skor Saat Ini:</div>
+    <div class="ai-comp-label" style="font-size:30px; text-align:center;">999</div>
+    <div class="ai-comp-button">Button_SimpanSkor</div>
+    <hr style="margin: 20px 0; border: 1px dashed #ccc;">
+    <div class="ai-comp-label" style="color: gray; font-size: 14px;">Non-visible components:</div>
+    <div class="ai-comp-button" style="background: #2ECC71; color: black; font-weight:bold; display: inline-block; padding: 5px 15px; margin-top: 5px;">💾 TinyDB1</div>
+    
+                    </div>
+                </div>
+                <!-- Explanation -->
+                <div style="flex: 1; background-color: var(--bg-light); border: 4px dashed var(--black); padding: 25px; border-radius: 16px;">
+                    <h3 style="margin-bottom: 15px;">Komponen UI MIT App Inventor</h3>
+                    <ul style="font-size: 20px;">
+                        <li><strong>TextBox:</strong> Tempat User mengetik (Input)</li>
+                        <li><strong>Button:</strong> Tombol untuk diklik pengguna</li>
+                        <li><strong>Label:</strong> Teks statis atau untuk hasil (Output)</li>
+                        <li><strong>TinyDB (Non-visible):</strong> Basis data penyimpanan.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Mini Kuis 7 🧠</h2>
+        <div class="slide-text">
+            <p style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">Jika kamu ingin membuat fitur 'To-Do List' yang datanya tidak terhapus walau HP direstart, komponen apa yang WAJIB dipakai?</p>
+            
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>Global Variable</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>TextBox Component</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'benar')">
+            <span>TinyDB (Database Lokal)</span>
+        </div>
+        
+            <div id="quiz-feedback" style="display: none; margin-top: 20px; padding: 15px; border: 4px solid var(--black); border-radius: 12px; font-weight: bold; font-size: 20px;"></div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Sistem Penyimpanan: Tag & Value 🏷️</h2>
+        <div class="slide-text">
+            <p>TinyDB tidak menyimpan data secara acak. Ia menggunakan sistem pasangan (pasutri) yang sangat rapi.</p><p>Pasangan ini disebut: <strong>Tag</strong> dan <strong>ValueToStore</strong>.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Apa itu Tag? 🏷️</h2>
+        <div class="slide-text">
+            <p><strong>Tag</strong> adalah label pengenal atau judul dari datamu.</p><p>Bentuknya berupa teks (String). Contoh Tag: <em>'NamaPemain'</em>, <em>'SkorTertinggi'</em>, <em>'Level'</em>.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Apa itu Value? 📦</h2>
+        <div class="slide-text">
+            <p><strong>ValueToStore</strong> adalah isi data sesungguhnya yang ingin kamu simpan secara permanen.</p><p>Isinya bisa berupa angka skor (misal: 100), atau teks nama (misal: 'Budi').</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Analogi: Laci Berlabel</h2>
+        <div class="slide-text">
+            <p>Bayangkan TinyDB seperti lemari besar dengan banyak laci.</p>
+            <div style="display: flex; gap: 20px; margin: 30px 0;">
+                <div style="flex: 1; background-color: #E0F7FA; padding: 25px; border: 4px solid var(--black); border-radius: 16px; box-shadow: 6px 6px 0px var(--black);">
+                    <h3 style="font-size: 24px; margin-bottom: 15px;">🏷️ Stiker (Tag)</h3>
+                    <p style="font-size: 20px;">Kamu menempelkan stiker bernama 'Kotak Mainan' di luar laci. Agar gampang dicari.</p>
+                </div>
+                <div style="flex: 1; background-color: #FFF9C4; padding: 25px; border: 4px solid var(--black); border-radius: 16px; box-shadow: 6px 6px 0px var(--black);">
+                    <h3 style="font-size: 24px; margin-bottom: 15px;">🧸 Isi Laci (Value)</h3>
+                    <p style="font-size: 20px;">Isinya adalah robot mainan sungguhan. Kamu tidak akan bisa mencari robot ini dengan mudah jika lacinya tak diberi stiker label!</p>
+                </div>
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Syarat Penting Sebuah Tag ⚠️</h2>
+        <div class="slide-text">
+            <p>Nama Tag <strong>HARUS UNIK!</strong> Jangan memakai Tag yang sama untuk menyimpan data yang berbeda jenis.</p><p>Jika kamu lupa nama Tag yang kamu buat, kamu TIDAK AKAN BISA membuka laci dan mengambil datamu kembali!</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Blok StoreValue 📥</h2>
+        <div class="slide-text">
+            <p>Sekarang, bagaimana cara kita menaruh barang ke dalam laci?</p><p>Kita menggunakan blok ungu bernama <strong>call TinyDB1.StoreValue</strong> (Simpan Nilai).</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="MIT App Inventor">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Blocks: Menggunakan StoreValue</h2>
+        <div class="slide-text">
+            <p>Blok ini akan menyimpan angka 100 ke dalam laci bernama 'SkorGame'.</p>
+            <div style="margin-top: 30px; background-color: #f8f9fa; border: 4px solid var(--black); border-radius: 16px; padding: 30px; box-shadow: 8px 8px 0px var(--black); overflow-x: auto;">
+                <h3 style="margin-bottom: 20px; color: #555;">Block Editor Workspace</h3>
+                
+    <div class="block-wrapper">
+        <div class="ai-block ai-method">call TinyDB1.StoreValue</div>
+        <div class="ai-nested">
+            <div style="display:flex; align-items:center; gap: 10px;">
+                <span style="color:#555; width: 120px; text-align:right;">tag</span>
+                <div class="ai-block ai-text">"SkorGame"</div>
+            </div>
+            <div style="display:flex; align-items:center; gap: 10px;">
+                <span style="color:#555; width: 120px; text-align:right;">valueToStore</span>
+                <div class="ai-block ai-math" style="background:#3b5fa8;">100</div>
+            </div>
+        </div>
+    </div>
+    
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Memahami Parameter StoreValue 🔍</h2>
+        <div class="slide-text">
+            <p>Perhatikan blok sebelumnya. Kita memberikan Tag 'SkorGame' (teks warna pink), dan memberikannya nilai angka 100 (blok biru).</p><p>Mulai detik itu juga, angka 100 sudah tersimpan aman di memori HP-mu selamanya!</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Blok GetValue 📤</h2>
+        <div class="slide-text">
+            <p>Kamu sudah menyimpan skornya. Lalu esok harinya kamu buka gamenya lagi, bagaimana cara menampilkan skor tersebut ke layar?</p><p>Kita gunakan blok pembaca laci: <strong>call TinyDB1.GetValue</strong>.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="MIT App Inventor">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Blocks: Menggunakan GetValue</h2>
+        <div class="slide-text">
+            <p>Mengambil data skor dan menampilkannya di Label.</p>
+            <div style="margin-top: 30px; background-color: #f8f9fa; border: 4px solid var(--black); border-radius: 16px; padding: 30px; box-shadow: 8px 8px 0px var(--black); overflow-x: auto;">
+                <h3 style="margin-bottom: 20px; color: #555;">Block Editor Workspace</h3>
+                
+    <div class="block-wrapper">
+        <div style="display:flex; align-items:center; gap: 5px;">
+            <div class="ai-block ai-component">set LabelSkor.Text to</div>
+            <div class="ai-block ai-method" style="margin-bottom:0;">call TinyDB1.GetValue</div>
+        </div>
+        <div class="ai-nested">
+            <div style="display:flex; align-items:center; gap: 10px;">
+                <span style="color:#555; width: 150px; text-align:right;">tag</span>
+                <div class="ai-block ai-text">"SkorGame"</div>
+            </div>
+            <div style="display:flex; align-items:center; gap: 10px;">
+                <span style="color:#555; width: 150px; text-align:right;">valueIfTagNotThere</span>
+                <div class="ai-block ai-math">0</div>
+            </div>
+        </div>
+    </div>
+    
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Apa itu 'valueIfTagNotThere'? 🛟</h2>
+        <div class="slide-text">
+            <p>Bayangkan kamu mencoba membuka laci berstiker 'SkorGame', TAPI ternyata pemain ini baru pertama kali main (lacinya belum pernah dibuat).</p><p>Daripada aplikasinya error/crash, parameter ini bertugas memberikan <strong>Nilai Darurat (Default)</strong>, yaitu 0. Sangat pintar kan?</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Mini Kuis 8 🧠</h2>
+        <div class="slide-text">
+            <p style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">Dalam konsep TinyDB, apa fungsi dari sebuah 'Tag'?</p>
+            
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>Sebagai isi data sesungguhnya yang akan disimpan</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'benar')">
+            <span>Sebagai stiker penamaan (judul) agar data mudah dicari di laci</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>Sebagai warna latar belakang aplikasi</span>
+        </div>
+        
+            <div id="quiz-feedback" style="display: none; margin-top: 20px; padding: 15px; border: 4px solid var(--black); border-radius: 12px; font-weight: bold; font-size: 20px;"></div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Penyimpanan Data (TinyDB)" data-subtitle="Misi 3: Gudang Data">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Kesimpulan Misi 3 🎯</h2>
+        <div class="slide-text">
+            <p>Luar biasa! Kamu baru saja menguasai kemampuan paling penting bagi pembuat aplikasi profesional.</p><p>Dengan StoreValue dan GetValue, aplikasi buatanmu kini memiliki memori permanen bagaikan gajah yang tak pernah lupa!</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <div style="text-align: center; margin-top: 100px;">
+            <h1 style="font-size: 50px; font-weight: 700; margin-bottom: 20px; background-color: var(--yellow); display: inline-block; padding: 20px 40px; border: 5px solid var(--black); border-radius: 16px; box-shadow: 8px 8px 0px var(--black); transform: rotate(-2deg);">Mengelola Data Aman & CRUD 🛡️</h1>
+            <p style="font-size: 26px; font-weight: 600; color: var(--black); margin-top: 30px;">Update, Hapus Data, & Membangun Brankas Rahasia</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Apa itu CRUD? 🔄</h2>
+        <div class="slide-text">
+            <p>CRUD adalah singkatan ajaib dalam dunia Database Engineering yang wajib kamu tahu:</p><ul><li><strong>C</strong>reate (Membuat Data)</li><li><strong>R</strong>ead (Membaca Data)</li><li><strong>U</strong>pdate (Memperbarui Data)</li><li><strong>D</strong>elete (Menghapus Data)</li></ul>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Create (C) & Read (R) ✅</h2>
+        <div class="slide-text">
+            <p>Di Misi 3, kita sebenarnya sudah melakukan Create dan Read!</p><p>Ketika kamu menggunakan <strong>StoreValue</strong> untuk data yang belum pernah ada, kamu melakukan Create.</p><p>Ketika kamu menggunakan <strong>GetValue</strong> untuk menampilkannya, kamu melakukan Read.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Update (U): Memperbarui Data 🔧</h2>
+        <div class="slide-text">
+            <p>Sekarang pertanyaannya: <em>Bagaimana cara kita mengubah skor dari 100 menjadi 500?</em></p><p>Apakah ada blok khusus bernama 'UpdateValue' di TinyDB? Ternyata TIDAK ADA!</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Bagaimana Cara Update di TinyDB? 💡</h2>
+        <div class="slide-text">
+            <p>Rahasia Update di TinyDB sangatlah mudah: <strong>Gunakan blok StoreValue lagi, dengan nama TAG YANG SAMA.</strong></p><p>Jika tag-nya persis sama (misalnya huruf besar/kecilnya sama persis), TinyDB akan langsung menimpa data lama dengan data barumu.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Analogi: Mengganti Isi Kardus (Update)</h2>
+        <div class="slide-text">
+            <p>Konsep penimpaan (overwrite) data:</p>
+            <div style="display: flex; gap: 20px; margin: 30px 0;">
+                <div style="flex: 1; background-color: #E0F7FA; padding: 25px; border: 4px solid var(--black); border-radius: 16px; box-shadow: 6px 6px 0px var(--black);">
+                    <h3 style="font-size: 24px; margin-bottom: 15px;">📦 Kardus berstiker 'Level'</h3>
+                    <p style="font-size: 20px;">Di pagi hari, isi kardus ini adalah angka 1.</p>
+                </div>
+                <div style="flex: 1; background-color: #FFF9C4; padding: 25px; border: 4px solid var(--black); border-radius: 16px; box-shadow: 6px 6px 0px var(--black);">
+                    <h3 style="font-size: 24px; margin-bottom: 15px;">🔄 Proses Menimpa (Update)</h3>
+                    <p style="font-size: 20px;">Di sore hari, kamu memasukkan angka 2 ke kardus 'Level'. Angka 1 otomatis terbuang dan tergantikan angka 2.</p>
+                </div>
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Rahasia Keberhasilan Update ⚠️</h2>
+        <div class="slide-text">
+            <p>Pastikan kamu tidak salah ketik (typo) pada nama Tag. Jika awalnya <em>'Skor'</em> (S besar), dan saat update kamu tulis <em>'skor'</em> (s kecil)...</p><p>TinyDB akan menganggap itu laci yang berbeda, dan data aslinya TIDAK AKAN TER-UPDATE!</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="MIT App Inventor">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Blocks: Contoh Update Skor</h2>
+        <div class="slide-text">
+            <p>Kita hanya memakai StoreValue lagi dengan tag yang persis sama.</p>
+            <div style="margin-top: 30px; background-color: #f8f9fa; border: 4px solid var(--black); border-radius: 16px; padding: 30px; box-shadow: 8px 8px 0px var(--black); overflow-x: auto;">
+                <h3 style="margin-bottom: 20px; color: #555;">Block Editor Workspace</h3>
+                
+    <div class="block-wrapper">
+        <div class="ai-block ai-event">when Button_NaikLevel.Click do</div>
+        <div class="ai-nested">
+            <div class="ai-block ai-method">call TinyDB1.StoreValue</div>
+            <div style="display:flex; align-items:center; gap: 10px; margin-left: 20px;">
+                <span style="color:#555; width: 120px; text-align:right;">tag</span>
+                <div class="ai-block ai-text">"SkorGame"</div>
+            </div>
+            <div style="display:flex; align-items:center; gap: 10px; margin-left: 20px;">
+                <span style="color:#555; width: 120px; text-align:right;">valueToStore</span>
+                <div class="ai-block ai-math" style="background:#3b5fa8;">500</div>
+            </div>
+        </div>
+    </div>
+    
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Mini Kuis 9 🧠</h2>
+        <div class="slide-text">
+            <p style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">Kamu menggunakan StoreValue dengan Tag 'Koin' nilainya 10. Lalu kamu memakai StoreValue lagi dengan Tag 'Koin' nilainya 50. Berapa nilai 'Koin' saat ini?</p>
+            
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>60 (karena ditambah)</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'benar')">
+            <span>50 (karena ditimpa / di-update)</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>10 (data pertama yang permanen)</span>
+        </div>
+        
+            <div id="quiz-feedback" style="display: none; margin-top: 20px; padding: 15px; border: 4px solid var(--black); border-radius: 12px; font-weight: bold; font-size: 20px;"></div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Delete (D): Menghapus Data 🗑️</h2>
+        <div class="slide-text">
+            <p>Kapan kita perlu menghapus data di aplikasi?</p><ul><li>Saat pengguna melakukan Logout (keluar akun).</li><li>Saat pengguna menekan tombol 'Reset Skor Game'.</li><li>Saat menghapus History pencarian yang memalukan.</li></ul>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Menghapus Tidak Cukup dengan '0' 🧹</h2>
+        <div class="slide-text">
+            <p>Mengubah value menjadi 0 atau teks kosong itu bukanlah menghapus laci, itu hanyalah mengosongkan isi laci. Lacinya (Tag) masih ada di database!</p><p>Untuk membakar dan menghancurkan laci tersebut selamanya, kita butuh blok Delete khusus.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Analogi: Menghapus Tulisan Pensil</h2>
+        <div class="slide-text">
+            <p>Membersihkan sejarah:</p>
+            <div style="display: flex; gap: 20px; margin: 30px 0;">
+                <div style="flex: 1; background-color: #E0F7FA; padding: 25px; border: 4px solid var(--black); border-radius: 16px; box-shadow: 6px 6px 0px var(--black);">
+                    <h3 style="font-size: 24px; margin-bottom: 15px;">📝 Tulisan Pensil</h3>
+                    <p style="font-size: 20px;">Kamu menulis rahasiamu di buku catatan (StoreValue).</p>
+                </div>
+                <div style="flex: 1; background-color: #FFF9C4; padding: 25px; border: 4px solid var(--black); border-radius: 16px; box-shadow: 6px 6px 0px var(--black);">
+                    <h3 style="font-size: 24px; margin-bottom: 15px;">🧽 Penghapus Karet (Delete)</h3>
+                    <p style="font-size: 20px;">Kamu mengambil penghapus karet dan menghapus tulisan itu tanpa sisa. Halaman kembali bersih total.</p>
+                </div>
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Blok ClearTag (Hapus Total) 💥</h2>
+        <div class="slide-text">
+            <p>Untuk melakukan penghapusan (Delete), App Inventor memiliki blok sakti berwarna ungu bernama: <strong>call TinyDB1.ClearTag</strong>.</p><p>Cukup masukkan nama tag yang ingin dihancurkan.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="MIT App Inventor">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Blocks: Menggunakan ClearTag</h2>
+        <div class="slide-text">
+            <p>Menghapus data 'NamaSiswa' dari muka bumi (database).</p>
+            <div style="margin-top: 30px; background-color: #f8f9fa; border: 4px solid var(--black); border-radius: 16px; padding: 30px; box-shadow: 8px 8px 0px var(--black); overflow-x: auto;">
+                <h3 style="margin-bottom: 20px; color: #555;">Block Editor Workspace</h3>
+                
+    <div class="block-wrapper">
+        <div class="ai-block ai-event">when Button_HapusAkun.Click do</div>
+        <div class="ai-nested">
+            <div class="ai-block ai-method">call TinyDB1.ClearTag</div>
+            <div style="display:flex; align-items:center; gap: 10px; margin-left: 20px;">
+                <span style="color:#555; width: 60px; text-align:right;">tag</span>
+                <div class="ai-block ai-text">"NamaSiswa"</div>
+            </div>
+            <div style="display:flex; align-items:center;">
+                <div class="ai-block ai-component">set LabelInfo.Text to</div>
+                <div class="ai-block ai-text" style="margin-left:10px;">"Akun telah dihapus!"</div>
+            </div>
+        </div>
+    </div>
+    
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Mini Kuis 10 🧠</h2>
+        <div class="slide-text">
+            <p style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">Jika kita ingin aplikasi 'melupakan' seluruh data pada sebuah tag tertentu secara permanen, blok apa yang digunakan?</p>
+            
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>TinyDB1.GetValue</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'benar')">
+            <span>TinyDB1.ClearTag</span>
+        </div>
+        
+        <div class="quiz-option" onclick="checkQuiz(this, 'salah')">
+            <span>TinyDB1.StoreValue dengan nilai 0</span>
+        </div>
+        
+            <div id="quiz-feedback" style="display: none; margin-top: 20px; padding: 15px; border: 4px solid var(--black); border-radius: 12px; font-weight: bold; font-size: 20px;"></div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Alur Kerja (Flowchart) Penyimpanan 🗺️</h2>
+        <div class="slide-text">
+            <p>Sebagai Developer sejati, sebelum memprogram Blocks, kita harus tahu alur kerja aplikasi saat pertama kali disentuh oleh pengguna.</p><p>Alur ini paling penting di bagian <strong>Screen1.Initialize</strong> (Saat Layar HP pertama kali menyala).</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Logika Saat Aplikasi Pertama Dibuka ⚙️</h2>
+        <div class="slide-text">
+            <ol><li>Aplikasi terbuka (Screen1 Initialize).</li><li>Aplikasi SEGERA mengecek brankas (GetValue) untuk mencari data 'Skor'.</li><li>Jika ada data, langsung pampang di Label Skor.</li><li>Jika tidak ada data, tulis angka 0 di Label Skor.</li></ol><p>Ini adalah resep rahasia aplikasi profesional!</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="MIT App Inventor">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Blocks: Flowchart Screen1.Initialize</h2>
+        <div class="slide-text">
+            <p>Membaca data secara otomatis di detik pertama aplikasi dibuka.</p>
+            <div style="margin-top: 30px; background-color: #f8f9fa; border: 4px solid var(--black); border-radius: 16px; padding: 30px; box-shadow: 8px 8px 0px var(--black); overflow-x: auto;">
+                <h3 style="margin-bottom: 20px; color: #555;">Block Editor Workspace</h3>
+                
+    <div class="block-wrapper">
+        <div class="ai-block ai-event" style="background:#5c2e91;">when Screen1.Initialize do</div>
+        <div class="ai-nested">
+            <div style="display:flex; align-items:center;">
+                <div class="ai-block ai-component">set Label_TampilSkor.Text to</div>
+            </div>
+            <div style="display:flex; align-items:center; margin-left: 20px;">
+                <div class="ai-block ai-method">call TinyDB1.GetValue</div>
+            </div>
+            <div style="display:flex; align-items:center; gap: 10px; margin-left: 40px;">
+                <span style="color:#555; width: 150px; text-align:right;">tag</span>
+                <div class="ai-block ai-text">"SkorGame"</div>
+            </div>
+            <div style="display:flex; align-items:center; gap: 10px; margin-left: 40px;">
+                <span style="color:#555; width: 150px; text-align:right;">valueIfTagNotThere</span>
+                <div class="ai-block ai-math">0</div>
+            </div>
+        </div>
+    </div>
+    
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Keamanan Lokal TinyDB 🛡️</h2>
+        <div class="slide-text">
+            <p>Sekarang pertanyaannya: <em>Apakah data rahasia yang kita simpan di TinyDB aman dari maling?</em></p><p>Jawabannya: <strong>Sandboxing (Sistem Kurungan)</strong>.</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Apa itu Sandboxing? 📦</h2>
+        <div class="slide-text">
+            <p>Tiap aplikasi di HP Android dibuatkan 'kotak pasir' terpisah. Aplikasi Instagram tidak akan bisa menembus kotak pasir milik aplikasimu untuk mengintip isi TinyDB-mu.</p><p>Jadi, datamu sangat aman dari serangan aplikasi lain!</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Ancaman Fisik (Peminjam HP) 🏃</h2>
+        <div class="slide-text">
+            <p>Tapi, ada satu kelemahan besar!</p><p>Jika temanmu meminjam fisik HP-mu secara langsung, lalu dia membuka aplikasimu, dia BISA melihat semua datamu di layar.</p><p>Maka dari itu, untuk data yang super sensitif, gabungkan TinyDB dengan <strong>Sistem Login Password</strong> yang sudah kita buat di Misi 2!</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Mini Project">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Mini Project: Brankas Rahasiaku 🤖</h2>
+        <div class="slide-text">
+            <p>Tugas Akhir: Buatlah aplikasi lengkap yang memiliki fungsi Create, Read, Update, Delete!</p>
+            <div style="display: flex; gap: 40px; margin-top: 30px; align-items: center;">
+                <!-- Phone Mockup -->
+                <div class="ai-phone">
+                    <div class="ai-phone-top"><span>12:00</span><span>🔋 100%</span></div>
+                    <div class="ai-titlebar">Screen1</div>
+                    <div class="ai-screen">
+                        
+    <div class="ai-comp-label" style="font-weight:bold; font-size: 18px;">Aplikasi Brankas Rahasia 🔒</div>
+    <div class="ai-comp-textbox">Ketik isi rahasiamu...</div>
+    <div class="ai-comp-button" style="background: #3b5fa8; color: white;">Simpan (C & U)</div>
+    <div class="ai-comp-button" style="background: #65ac43; color: white;">Baca (R)</div>
+    <div class="ai-comp-button" style="background: #b73e6a; color: white;">Hancurkan (D)</div>
+    <div class="ai-comp-label" style="margin-top: 20px; font-style: italic; background:#eee; padding:10px;">Output: (Menunggu aksi)</div>
+    
+                    </div>
+                </div>
+                <!-- Explanation -->
+                <div style="flex: 1; background-color: var(--bg-light); border: 4px dashed var(--black); padding: 25px; border-radius: 16px;">
+                    <h3 style="margin-bottom: 15px;">Komponen UI MIT App Inventor</h3>
+                    <ul style="font-size: 20px;">
+                        <li><strong>TextBox:</strong> Tempat User mengetik (Input)</li>
+                        <li><strong>Button:</strong> Tombol untuk diklik pengguna</li>
+                        <li><strong>Label:</strong> Teks statis atau untuk hasil (Output)</li>
+                        <li><strong>TinyDB (Non-visible):</strong> Basis data penyimpanan.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Misi Project Kalian 🏆</h2>
+        <div class="slide-text">
+            <ul><li>Desain UI seperti di layar sebelumnya.</li><li>Gunakan <strong>StoreValue</strong> untuk tombol Simpan. (Pastikan pakai Tag 'Rahasia').</li><li>Gunakan <strong>GetValue</strong> untuk tombol Baca dan tampilkan ke Label Output.</li><li>Gunakan <strong>ClearTag</strong> untuk tombol Hancurkan agar memori kembali bersih!</li></ul>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <div class="slide" data-title="Mengelola Data Aman" data-subtitle="Misi 4: CRUD & Flowchart">
+            <div class="content-card">
+                <div class="inner-content">
+                    
+        <h2 class="slide-title">Kesimpulan Modul 🎓</h2>
+        <div class="slide-text">
+            <p>Selamat! Kamu telah lulus menjadi <strong>Junior Data Engineer & Security Agent</strong>.</p><p>Kamu berhasil memahami etika privasi data, melindungi pengguna dari serangan, serta menggunakan sistem CRUD Database Lokal dengan sangat mahir di MIT App Inventor.</p><p>Teruslah berlatih coding dan jadilah pencipta teknologi masa depan!</p>
+        </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        </div>
+
+        <!-- Navigation -->
+
+        <div class="nav-container">
+            <button id="prev-btn" class="nav-btn" disabled>◀ KEMBALI</button>
+            
+            <div class="counter-group">
+                <div class="slide-counter">SLIDE <span id="current-page">1</span> DARI <span id="total-page">?</span></div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar" id="progress-bar" style="width: 10%;"></div>
+                </div>
+            </div>
+            
+            <button id="next-btn" class="nav-btn">LANJUT ▶</button>
+        </div>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const currentPageEl = document.getElementById('current-page');
+        const totalPageEl = document.getElementById('total-page');
+        const progressBar = document.getElementById('progress-bar');
+        
+        let currentSlide = 0;
+        const totalSlides = slides.length;
+        
+        totalPageEl.textContent = totalSlides;
+        
+        function updateSlides() {
+            slides.forEach((slide, index) => {
+                if(index === currentSlide) {
+                    slide.classList.add('active');
+                    document.getElementById('banner-title').textContent = slide.dataset.title || 'APP INVENTOR';
+                    document.getElementById('banner-subtitle').textContent = slide.dataset.subtitle || 'Materi';
+                } else {
+                    slide.classList.remove('active');
+                }
+            });
+            
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+            
+            currentPageEl.textContent = currentSlide + 1;
+            progressBar.style.width = ((currentSlide + 1) / totalSlides * 100) + '%';
+            
+            // Reset quiz feedback when changing slides
+            const feedbacks = document.querySelectorAll('#quiz-feedback');
+            feedbacks.forEach(fb => fb.style.display = 'none');
+            const options = document.querySelectorAll('.quiz-option');
+            options.forEach(opt => {
+                opt.classList.remove('correct', 'wrong');
+            });
+        }
+        
+        prevBtn.addEventListener('click', () => {
+            if(currentSlide > 0) {
+                currentSlide--;
+                updateSlides();
+            }
+        });
+        
+        nextBtn.addEventListener('click', () => {
+            if(currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlides();
+            }
+        });
+        
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'ArrowRight' || e.key === 'Space') {
+                if(currentSlide < totalSlides - 1) { currentSlide++; updateSlides(); }
+            }
+            if(e.key === 'ArrowLeft') {
+                if(currentSlide > 0) { currentSlide--; updateSlides(); }
+            }
+        });
+        
+        // Quiz logic
+        function checkQuiz(element, status) {
+            const slide = element.closest('.slide');
+            const options = slide.querySelectorAll('.quiz-option');
+            const feedback = slide.querySelector('#quiz-feedback');
+            
+            options.forEach(opt => {
+                opt.classList.remove('correct', 'wrong');
+            });
+            
+            if (status === 'benar') {
+                element.classList.add('correct');
+                feedback.textContent = "✅ TEPAT SEKALI! Jawabanmu benar, agen rahasia!";
+                feedback.style.color = "var(--green)";
+                feedback.style.borderColor = "var(--green)";
+            } else {
+                element.classList.add('wrong');
+                feedback.textContent = "❌ Oops! Kurang tepat. Coba pikirkan lagi atau diskusikan dengan guru.";
+                feedback.style.color = "var(--red)";
+                feedback.style.borderColor = "var(--red)";
+            }
+            feedback.style.display = 'block';
+        }
+        
+        updateSlides();
+    </script>
+</body>
+</html>

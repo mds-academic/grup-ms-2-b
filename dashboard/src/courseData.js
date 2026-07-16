@@ -52,7 +52,7 @@ export const courseData = {
         ]
       },
       {
-        time: 887, // 14:47
+        time: 885, // 14:45, before the 14:47 segment boundary
         title: "Mini Kuis 3 🧠",
         questions: [
           {

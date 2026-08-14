@@ -74,19 +74,21 @@ const dashboardNotice = reactive({
   title: '',
   message: '',
   actionLabel: 'Mengerti',
-  actionStep: null
+  actionStep: null,
+  actionMode: 'step'
 });
 const dashboardNoticeIcon = computed(() => ({
   success: 'OK',
   warning: '!',
   error: '!'
 })[dashboardNotice.type] || '!');
-const showDashboardNotice = ({ type = 'warning', title = 'Perhatian', message = '', actionLabel = 'Mengerti', actionStep = null } = {}) => {
+const showDashboardNotice = ({ type = 'warning', title = 'Perhatian', message = '', actionLabel = 'Mengerti', actionStep = null, actionMode = 'step' } = {}) => {
   dashboardNotice.type = type;
   dashboardNotice.title = title;
   dashboardNotice.message = message;
   dashboardNotice.actionLabel = actionLabel;
   dashboardNotice.actionStep = actionStep;
+  dashboardNotice.actionMode = actionMode;
   dashboardNotice.isOpen = true;
 };
 const closeDashboardNotice = () => {
@@ -96,7 +98,13 @@ const handleDashboardNoticeAction = () => {
   if (dashboardNotice.actionStep) {
     currentStep.value = dashboardNotice.actionStep;
   }
+  const shouldOpenQuiz = dashboardNotice.actionMode === 'quiz';
   closeDashboardNotice();
+  if (shouldOpenQuiz) {
+    nextTick(() => {
+      openQuizButtonHandler();
+    });
+  }
 };
 const schoolOptions = ref([]);
 const isSchoolLoading = ref(false);
@@ -1771,10 +1779,21 @@ watch(currentStep, (newStep) => {
 });
 
 const openQuizButtonHandler = () => {
-  if (players[currentStep.value] && typeof players[currentStep.value].pauseVideo === "function") {
-    players[currentStep.value].pauseVideo();
+  const stepId = currentStep.value;
+  if (players[stepId] && typeof players[stepId].pauseVideo === "function") {
+    players[stepId].pauseVideo();
   }
-  openQuiz(courseData[2].quizzes[0].questions, false);
+  const quizzes = courseData[stepId]?.quizzes || [];
+  const targetQuiz = quizzes.find(quiz => (quiz.questions || []).some(q => {
+    if (!q.qid || q.type === 'info' || q.continueOnly === true) return false;
+    const ans = studentProgress.value[`${q.qid}_Ans`];
+    return ans === undefined || ans === null || ans === '';
+  })) || quizzes[0];
+  if (targetQuiz) {
+    targetQuiz.shown = true;
+    persistLearningState({ force: true });
+    openQuiz(targetQuiz.questions, false, null, targetQuiz, stepId);
+  }
 };
 
 const getStepQuizProgress = (stepId) => {
@@ -1798,7 +1817,7 @@ const getStepQuizProgress = (stepId) => {
   const sessionCompletedCount = requiredQuizzes.filter(item => item.isCompleted && item.hasOpenedThisSession).length;
   const openedCount = requiredQuizzes.filter(item => item.hasOpenedThisSession).length;
   const activeQuizIndex = requiredQuizzes.findIndex(item => item.isActive) + 1;
-  const displayCompletedCount = sessionCompletedCount;
+  const displayCompletedCount = recordedCompletedCount;
 
   return { requiredQuizzes, total, recordedCompletedCount, displayCompletedCount, openedCount, activeQuizIndex };
 };
@@ -1865,13 +1884,18 @@ const getStepBlockingNotice = (stepId, targetStep = null) => {
   const progressText = quizProgress.total > 0 
     ? `\n\nProgress Checkpoint Modul ${stepId}: ${quizProgress.recordedCompletedCount} / ${quizProgress.total} selesai.`
     : '';
+  const checkpointIncomplete = quizProgress.total > 0 && quizProgress.recordedCompletedCount < quizProgress.total;
+  const canRecoverQuiz = checkpointIncomplete && projectSubmitted && (!stepConfig.videoId || videoWatchedStatus.value[stepId]);
 
   return {
     type: 'warning',
     title: `${moduleLabel} belum selesai`,
-    message: `Kamu sudah mulai belajar, tapi ${statusText}.\n\nPastikan syarat di atas sudah terpenuhi sebelum ${destinationLabel} terbuka otomatis.${progressText}`,
-    actionLabel: `Lanjutkan ${moduleLabel}`,
-    actionStep: Number(stepId)
+    message: canRecoverQuiz
+      ? `Kamu sudah mulai belajar, tapi ${statusText}.\n\nKalau quiz/checkpoint tidak muncul otomatis di HP, tekan tombol di bawah untuk membuka checkpoint yang belum selesai.${progressText}`
+      : `Kamu sudah mulai belajar, tapi ${statusText}.\n\nPastikan syarat di atas sudah terpenuhi sebelum ${destinationLabel} terbuka otomatis.${progressText}`,
+    actionLabel: canRecoverQuiz ? 'Buka checkpoint' : `Lanjutkan ${moduleLabel}`,
+    actionStep: Number(stepId),
+    actionMode: canRecoverQuiz ? 'quiz' : 'step'
   };
 };
 

@@ -51,7 +51,8 @@ const quizModalStyles = ref({ transform: 'translateY(50px) scale(0.95)', opacity
 
 
 // Reactive App States
-const currentStep = ref(1);
+const currentStep = ref(0);
+const maxStep = computed(() => Math.max(...Object.keys(courseData).map(Number)));
 const totalSteps = Object.keys(courseData).length;
 const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz58EffczfpcNL0bvbD6VZvrY3mrVNtmpWasSwJT0baOowD2yGu_KNM0YNul9EtxxKVpg/exec';
 const LEARNING_STATE_STORAGE_KEY = 'mds_gms2b_learning_state';
@@ -458,7 +459,7 @@ onMounted(() => {
 });
 
 const videoWatchedStatus = ref({
-  1: false, 2: false, 3: false, 4: false, 5: false, 6: false, 7: false
+  0: false, 1: false, 2: false, 3: false, 4: false, 5: false, 6: false, 7: false
 });
 
 const youtubeReady = ref(false);
@@ -467,10 +468,11 @@ const timeCheckers = {};
 
 
 const introRefs = ref({});
-const introPlayed = ref({ 1: true, 2: true, 3: true, 4: true, 5: true });
+const introPlayed = ref({ 0: false, 1: false, 2: false, 3: false, 4: false, 5: false });
 const introVideoSrc = import.meta.env.BASE_URL + 'intro.mp4';
 
 const playerStates = ref({
+  0: { isPlaying: false, currentTime: 0, duration: 0, isMuted: false, isReady: false, isError: false, hasStarted: false, isBuffering: false },
   1: { isPlaying: false, currentTime: 0, duration: 0, isMuted: false, isReady: false, isError: false, hasStarted: false, isBuffering: false },
   2: { isPlaying: false, currentTime: 0, duration: 0, isMuted: false, isReady: false, isError: false, hasStarted: false, isBuffering: false },
   3: { isPlaying: false, currentTime: 0, duration: 0, isMuted: false, isReady: false, isError: false, hasStarted: false, isBuffering: false },
@@ -538,7 +540,7 @@ const restoreLearningState = () => {
     if (!savedState || typeof savedState !== 'object') return;
 
     const restoredStep = Number(savedState.currentStep);
-    if (courseData[restoredStep]) currentStep.value = restoredStep;
+    if (courseData[restoredStep] !== undefined) currentStep.value = restoredStep;
 
     Object.keys(videoWatchedStatus.value).forEach((stepId) => {
       videoWatchedStatus.value[stepId] = savedState.videoWatchedStatus?.[stepId] === true;
@@ -679,9 +681,15 @@ const updateVideoControls = (stepId) => {
   const hasQuiz = courseData[stepId]?.quizzes?.length > 0;
   const requiredPercentage = hasQuiz ? 0.90 : 0.95;
 
-  if (percentage >= requiredPercentage && !videoWatchedStatus.value[stepId]) {
+  // Video 00 and all videos require reaching at least 20 seconds before end (or required percentage)
+  const thresholdTime = effectiveDuration > 25 ? (effectiveDuration - 20) : (effectiveDuration * requiredPercentage);
+  const isWatchedByThreshold = effectiveDuration > 0 && effectiveCurrentTime >= thresholdTime;
+  const isWatchedByPercent = percentage >= requiredPercentage;
+  const meetsWatchRequirement = (stepId === 0 || stepId === '0') ? isWatchedByThreshold : (isWatchedByThreshold || isWatchedByPercent);
+
+  if (meetsWatchRequirement && !videoWatchedStatus.value[stepId]) {
     videoWatchedStatus.value[stepId] = true;
-    console.log(`[DEBUG] Video ${stepId} reached required watch percentage (${requiredPercentage * 100}%). Marked as watched.`);
+    console.log(`[DEBUG] Video ${stepId} reached required watch threshold. Marked as watched.`);
   }
 
   const now = Date.now();
@@ -1844,9 +1852,9 @@ const isStepFinished = (stepId) => {
 
 const getStepBlockingNotice = (stepId, targetStep = null) => {
   const stepConfig = courseData[stepId] || {};
-  const moduleLabel = `Modul ${stepId}`;
+  const moduleLabel = (stepId === 0 || stepId === '0') ? 'Video 00' : `Modul ${stepId}`;
   const quizProgress = getStepQuizProgress(stepId);
-  const destinationLabel = targetStep ? `Modul ${targetStep}` : 'modul berikutnya';
+  const destinationLabel = targetStep !== null ? ((targetStep === 0 || targetStep === '0') ? 'Video 00' : `Modul ${targetStep}`) : 'modul berikutnya';
   const playerState = playerStates.value[stepId] || {};
   const videoStarted = Boolean(
     videoWatchedStatus.value[stepId] ||
@@ -1859,7 +1867,7 @@ const getStepBlockingNotice = (stepId, targetStep = null) => {
     return {
       type: 'warning',
       title: `Mulai ${moduleLabel} dulu ya!`,
-      message: `${destinationLabel} masih terkunci karena kamu belum mulai menonton video ${moduleLabel}.\n\nYuk mulai dari langkah pertama:\n\n1. Tonton video ${moduleLabel} sampai selesai.\n2. Setelah video selesai, kerjakan Quiz/Checkpoint ${moduleLabel}.\n3. Jika semua checkpoint sudah selesai, ${destinationLabel} akan terbuka otomatis.`,
+      message: `${destinationLabel} masih terkunci karena kamu belum mulai menonton video ${moduleLabel}.\n\nYuk mulai dari langkah pertama:\n\n1. Tonton video ${moduleLabel} sampai selesai (minimal hingga 20 detik sebelum selesai).\n2. Setelah video selesai, kerjakan Quiz/Checkpoint jika ada.\n3. Jika semua persyaratan selesai, ${destinationLabel} akan terbuka otomatis.`,
       actionLabel: `Mulai ${moduleLabel}`,
       actionStep: Number(stepId)
     };
@@ -1867,14 +1875,14 @@ const getStepBlockingNotice = (stepId, targetStep = null) => {
 
   let projectSubmitted = true;
   if (stepId === 5) {
-    // TODO: Buka komentar ini saat akan push ke Git agar kewajiban upload aktif
-    const projCol = 'Project1_Code';
-    projectSubmitted = !!studentProgress.value[projCol];
+    projectSubmitted = !!studentProgress.value['Project_Final_Code'];
   }
 
   let statusText = '';
   if (!videoWatchedStatus.value[stepId]) {
-    statusText = 'videonya belum selesai ditonton (minimal 90-95%)';
+    statusText = (stepId === 0 || stepId === '0')
+      ? 'video orientasi ini belum selesai ditonton (wajib tonton sampai minimal 20 detik sebelum video berakhir)'
+      : 'videonya belum selesai ditonton (minimal sampai 20 detik sebelum selesai)';
   } else if (!projectSubmitted) {
     statusText = 'kamu belum mengumpulkan form project (link atau file .aia)';
   } else {
@@ -1904,7 +1912,7 @@ const goToStep = (step) => {
     currentStep.value = step;
     return;
   }
-  for (let i = 1; i < step; i++) {
+  for (let i = 0; i < step; i++) {
     if (!isStepFinished(i)) {
       showDashboardNotice(getStepBlockingNotice(i, step));
       return;
@@ -1920,7 +1928,7 @@ const handleStepSelect = (event) => {
 };
 
 const prevStep = () => {
-  if (currentStep.value > 1) {
+  if (currentStep.value > 0) {
     currentStep.value--;
   }
 };
@@ -1930,7 +1938,7 @@ const nextStep = () => {
     showDashboardNotice(getStepBlockingNotice(currentStep.value, currentStep.value + 1));
     return;
   }
-  if (currentStep.value < Object.keys(courseData).length) {
+  if (currentStep.value < maxStep.value) {
     const previousStep = currentStep.value;
     currentStep.value++;
     console.log(`[DEBUG] Tab berpindah dari Materi ${previousStep} ke Materi ${currentStep.value}.`);
@@ -2067,10 +2075,10 @@ const getStepConfig = (stepId) => {
         <div class="mission-progress" aria-label="Progres pembelajaran">
           <div class="progress-copy">
             <span>Progres misi</span>
-            <span id="progressText">{{ currentStep }} dari {{ totalSteps }}</span>
+            <span id="progressText">{{ currentStep }} dari {{ maxStep }}</span>
           </div>
           <div class="progress-track">
-            <div class="progress-fill" :style="{ width: (currentStep / totalSteps * 100) + '%' }"></div>
+            <div class="progress-fill" :style="{ width: (currentStep / maxStep * 100) + '%' }"></div>
           </div>
         </div>
 
@@ -2113,6 +2121,14 @@ const getStepConfig = (stepId) => {
 
         <section class="step-panel" v-for="(data, step) in courseData" :key="step" :id="'step-' + step" v-show="currentStep === parseInt(step)">
           <div class="video-frame" :class="{ 'player-ready': playerStates[step]?.isReady }" :data-video-step="step">
+            <video 
+              v-show="playerStates[step]?.introPlaying"
+              :ref="(el) => { if (el) introRefs[step] = el; }"
+              :src="introVideoSrc"
+              style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 10; background: black;"
+              @ended="onIntroEnded(step)"
+              playsinline
+            ></video>
             <div :id="'youtube-player-' + step"></div>
             <div class="custom-thumbnail" v-show="!playerStates[step]?.hasStarted" @click="togglePlay(step)">
               <img :src="data.thumbnail || 'https://cdn-web-2.ruangguru.com/landing-pages/assets/fec32e8d-d711-48a2-bd22-59581f0594c1.jpg'" alt="Thumbnail" />
@@ -2195,10 +2211,10 @@ const getStepConfig = (stepId) => {
         </section>
         
         <div class="nav-buttons">
-          <button class="nav-button secondary" type="button" :disabled="currentStep === 1" @click="prevStep()">
+          <button class="nav-button secondary" type="button" :disabled="currentStep === 0" @click="prevStep()">
             ← Modul Sebelumnya
           </button>
-          <button class="nav-button primary" type="button" :disabled="currentStep === Object.keys(courseData).length" @click="nextStep()">
+          <button class="nav-button primary" type="button" :disabled="currentStep === maxStep" @click="nextStep()">
             Modul Berikutnya →
           </button>
         </div>

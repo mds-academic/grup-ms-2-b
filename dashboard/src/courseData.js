@@ -1,4 +1,60 @@
 export const courseData = {
+  0: {
+    thumbnail: "https://img.youtube.com/vi/yxmLOk5vcFg/hqdefault.jpg",
+    kicker: "Video 00 · Orientasi",
+    title: "Introduction to Async Learning",
+    duration: "Video 00",
+    videoId: "yxmLOk5vcFg",
+    startSeconds: 0,
+    bookmarks: [
+      { time: 0, label: "Pengenalan Async Learning" },
+      { time: 25, label: "Ritme Belajar & Pause" },
+      { time: 55, label: "Alur Belajar Step-by-Step" },
+      { time: 85, label: "Pop-up Quiz Interaktif" },
+      { time: 115, label: "Materi Bacaan & Praktik Mandiri" }
+    ],
+    quizzes: [],
+    summaryHtml: `
+      <header class="reading-header">
+        <div>
+          <p class="label">Materi Bacaan 00</p>
+          <h3>Panduan Pembelajaran Mandiri (Async Learning)</h3>
+        </div>
+      </header>
+      <article class="reading-section">
+        <h4>Selamat Datang di Pembelajaran Mandiri!</h4>
+        <div class="slide-text">
+          <p>Program pembelajaran mandiri ini dipersembahkan oleh <strong>UOB My Digital Space</strong>. Di platform ini, kamu memegang kendali penuh atas ritme dan kecepatan belajarmu.</p>
+          <div class="quote-box">Belajar mandiri bukan tentang siapa yang paling cepat selesai, tetapi tentang siapa yang benar-benar memahami materi yang dipelajari.</div>
+        </div>
+        <h4>Aturan Penting Selama Belajar</h4>
+        <div class="slide-text">
+          <div class="info-grid">
+            <div class="mini-card" style="background-color:#E3F2FD;">
+              <h3>1. Video Step-by-Step</h3>
+              <p>Materi disusun secara bertahap. Tonton setiap video sampai selesai (minimal hingga 20 detik sebelum video berakhir) agar modul berikutnya terbuka otomatis.</p>
+            </div>
+            <div class="mini-card" style="background-color:#FFF3E0;">
+              <h3>2. Pop-up Quiz Tiba-tiba</h3>
+              <p>Di tengah video, Pop-up Quiz akan muncul secara interaktif. Jawablah dengan benar untuk melanjutkan video. Gunakan tombol ulangi 30 detik jika perlu mengulang penjelasan.</p>
+            </div>
+            <div class="mini-card" style="background-color:#E8F5E9;">
+              <h3>3. Rangkuman & Praktik</h3>
+              <p>Tepat di bawah video terdapat rangkuman materi bacaan dan area pengumpulan proyek mandiri yang terhubung ke sistem penilaian.</p>
+            </div>
+          </div>
+        </div>
+        <h4>Tips Sukses Belajar</h4>
+        <div class="slide-text">
+          <ul>
+            <li><strong>Fokus pada layar:</strong> Jangan tinggalkan video saat sedang berjalan agar tidak ketinggalan quiz interaktif.</li>
+            <li><strong>Pause & Catat:</strong> Jangan ragu mem-pause video untuk mencatat poin-poin penting.</li>
+            <li><strong>Kerjakan Proyek:</strong> Terapkan konsep yang sudah dipelajari pada mini project di setiap checkpoint.</li>
+          </ul>
+        </div>
+      </article>
+    `
+  },
   1: {
     thumbnail: "./thumb_1.png",
     kicker: "Checkpoint 01 · Mulai di sini",

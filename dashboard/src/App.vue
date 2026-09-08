@@ -56,6 +56,10 @@ const maxStep = computed(() => Math.max(...Object.keys(courseData).map(Number)))
 const totalSteps = Object.keys(courseData).length;
 const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz58EffczfpcNL0bvbD6VZvrY3mrVNtmpWasSwJT0baOowD2yGu_KNM0YNul9EtxxKVpg/exec';
 const LEARNING_STATE_STORAGE_KEY = 'mds_gms2b_learning_state';
+const getLearningStateStorageKey = (email = studentData.value.email) => email ? `$mds_gms2b_learning_state:${String(email).toLowerCase().trim()}` : 'mds_gms2b_learning_state';
+const getProgressStorageKey = (email = studentData.value.email) => email ? `mds_gms2b_student_progress:${String(email).toLowerCase().trim()}` : 'mds_gms2b_student_progress';
+const getLoginStorageKey = () => 'mds_gms2b_student_login';
+
 const LOGIN_STORAGE_KEY = 'mds_gms2b_student_login';
 const PROGRESS_STORAGE_KEY = 'mds_gms2b_student_progress';
 let learningStateHydrated = false;
@@ -140,7 +144,7 @@ Object.keys(courseData).forEach(stepId => {
 
 const saveProgress = (key, value) => {
   studentProgress.value[key] = value;
-  localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(studentProgress.value));
+  localStorage.setItem(getProgressStorageKey(), JSON.stringify(studentProgress.value));
   return syncToSheets();
 };
 
@@ -152,7 +156,7 @@ const markQuestionFailed = (qid) => {
   if (qid === 'V6_Q1') studentProgress.value['V6_Needs_Ans'] = '0';
   if (qid === 'V6_Q2') studentProgress.value['V6_Wants_Ans'] = '0';
   if (qid === 'V6_Q3') studentProgress.value['V6_IDE_Code'] = '0';
-  localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(studentProgress.value));
+  localStorage.setItem(getProgressStorageKey(), JSON.stringify(studentProgress.value));
   syncToSheets();
 };
 
@@ -329,8 +333,8 @@ const handleLogin = async () => {
       if (!data.existsInResult || !data.progress || Object.keys(data.progress).length === 0) {
         console.log('[MDS] Data reset terdeteksi dari sheet. Menghapus cache lokal.');
         studentProgress.value = {};
-        localStorage.removeItem(PROGRESS_STORAGE_KEY);
-        localStorage.removeItem(LEARNING_STATE_STORAGE_KEY);
+        localStorage.removeItem(getProgressStorageKey());
+        localStorage.removeItem(getLearningStateStorageKey());
         currentStep.value = 0;
         Object.keys(videoWatchedStatus.value).forEach(k => { videoWatchedStatus.value[k] = false; });
         Object.keys(courseData).forEach(s => {
@@ -338,7 +342,7 @@ const handleLogin = async () => {
         });
       } else {
         console.log('[MDS] Restore progress dari Google Sheets:', data.progress);
-        studentProgress.value = { ...studentProgress.value, ...data.progress };
+        studentProgress.value = { ...data.progress };
         if (studentProgress.value['V6_Needs_Ans'] && !studentProgress.value['V6_Q1_Ans']) {
           studentProgress.value['V6_Q1_Ans'] = studentProgress.value['V6_Needs_Ans'];
         }
@@ -348,7 +352,7 @@ const handleLogin = async () => {
         if (studentProgress.value['V6_IDE_Code'] && !studentProgress.value['V6_Q3_Ans']) {
           studentProgress.value['V6_Q3_Ans'] = studentProgress.value['V6_IDE_Code'];
         }
-        localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(studentProgress.value));
+        localStorage.setItem(getProgressStorageKey(), JSON.stringify(studentProgress.value));
       }
 
       nextTick(() => {
@@ -457,7 +461,13 @@ const toggleEmailHelp = () => {
 };
 
 
+const handleVisibilityChange = () => {
+  if (document.hidden) pauseAllMediaExcept(-1);
+  else if (isLoggedIn.value) pauseAllMediaExcept(currentStep.value);
+};
+
 onUnmounted(() => {
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('resize', updateWidth);
 });
 
@@ -492,15 +502,15 @@ const checkCloudProgressOnMount = async () => {
       if (!data.existsInResult) {
         console.log('[MDS] Reset admin terdeteksi saat mount. Reset progress lokal.');
         studentProgress.value = {};
-        localStorage.removeItem(PROGRESS_STORAGE_KEY);
-        localStorage.removeItem(LEARNING_STATE_STORAGE_KEY);
+        localStorage.removeItem(getProgressStorageKey());
+        localStorage.removeItem(getLearningStateStorageKey());
         currentStep.value = 0;
         Object.keys(videoWatchedStatus.value).forEach(k => { videoWatchedStatus.value[k] = false; });
         Object.keys(courseData).forEach(s => {
           (courseData[s].quizzes || []).forEach(q => { q.shown = false; });
         });
       } else if (data.progress && Object.keys(data.progress).length > 0) {
-        studentProgress.value = { ...studentProgress.value, ...data.progress };
+        studentProgress.value = { ...data.progress };
         if (studentProgress.value['V6_Needs_Ans'] && !studentProgress.value['V6_Q1_Ans']) {
           studentProgress.value['V6_Q1_Ans'] = studentProgress.value['V6_Needs_Ans'];
         }
@@ -510,7 +520,7 @@ const checkCloudProgressOnMount = async () => {
         if (studentProgress.value['V6_IDE_Code'] && !studentProgress.value['V6_Q3_Ans']) {
           studentProgress.value['V6_Q3_Ans'] = studentProgress.value['V6_IDE_Code'];
         }
-        localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(studentProgress.value));
+        localStorage.setItem(getProgressStorageKey(), JSON.stringify(studentProgress.value));
       }
     }
   } catch(e) {
@@ -519,6 +529,7 @@ const checkCloudProgressOnMount = async () => {
 };
 
 onMounted(() => {
+  document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('resize', updateWidth);
 
   const savedLogin = localStorage.getItem(LOGIN_STORAGE_KEY);
@@ -526,10 +537,6 @@ onMounted(() => {
     studentData.value = JSON.parse(savedLogin);
     isLoggedIn.value = true;
     checkCloudProgressOnMount();
-  }
-  const savedProgress = localStorage.getItem(PROGRESS_STORAGE_KEY);
-  if (savedProgress) {
-    studentProgress.value = JSON.parse(savedProgress);
   }
   restoreLearningState();
 });
@@ -600,7 +607,7 @@ const persistLearningState = ({ force = false } = {}) => {
       : Math.floor(getVideoStartBoundary(stepId) + (playerStates.value[stepId]?.currentTime || 0));
   });
 
-  localStorage.setItem(LEARNING_STATE_STORAGE_KEY, JSON.stringify({
+  localStorage.setItem(getLearningStateStorageKey(), JSON.stringify({
     currentStep: Number(currentStep.value),
     videoWatchedStatus: { ...videoWatchedStatus.value },
     quizShown,
@@ -612,7 +619,7 @@ const persistLearningState = ({ force = false } = {}) => {
 const restoreLearningState = () => {
   learningStateHydrated = true;
   try {
-    const savedState = JSON.parse(localStorage.getItem(LEARNING_STATE_STORAGE_KEY) || 'null');
+    const savedState = JSON.parse(localStorage.getItem(getLearningStateStorageKey()) || 'null');
     if (!savedState || typeof savedState !== 'object') return;
 
     const restoredStep = Number(savedState.currentStep);
@@ -970,6 +977,7 @@ const initializeYouTubePlayer = (stepId) => {
     videoId: courseData[normalizedStepId].videoId,
     playerVars: {
       playsinline: 1,
+      autoplay: 0,
       rel: 0,
       controls: 0,
       vq: 'hd1080',
@@ -986,6 +994,7 @@ const initializeYouTubePlayer = (stepId) => {
         iframe.setAttribute("tabindex", "-1");
         iframe.setAttribute("aria-hidden", "true");
         
+        if (typeof event.target.pauseVideo === 'function') event.target.pauseVideo();
         playerStates.value[normalizedStepId].isReady = true;
         playerStates.value[normalizedStepId].duration = event.target.getDuration() || 0;
         
@@ -1295,7 +1304,7 @@ const handleStandardAnswer = (answer) => {
   quizState.value.selectedChoice = answer;
   if (item.qid) {
     studentProgress.value[attKey] = attempts;
-    localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(studentProgress.value));
+    localStorage.setItem(getProgressStorageKey(), JSON.stringify(studentProgress.value));
     syncToSheets();
   } else {
     failedAttempts.value[item.question] = attempts;

@@ -149,6 +149,9 @@ const markQuestionFailed = (qid) => {
   studentProgress.value[`${qid}_Ans`] = '0';
   studentProgress.value[`${qid}_Score`] = 0;
   studentProgress.value[`${qid}_Failed`] = true;
+  if (qid === 'V6_Q1') studentProgress.value['V6_Needs_Ans'] = '0';
+  if (qid === 'V6_Q2') studentProgress.value['V6_Wants_Ans'] = '0';
+  if (qid === 'V6_Q3') studentProgress.value['V6_IDE_Code'] = '0';
   localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(studentProgress.value));
   syncToSheets();
 };
@@ -311,6 +314,7 @@ const handleLogin = async () => {
       action: 'login',
       school: selectedSchool.value,
       email: loginEmail.value,
+      group: 'gms2b',
       attempts: String(nextAttempt)
     });
     const res = await fetch(`${APP_SCRIPT_URL}?${params.toString()}`);
@@ -320,6 +324,36 @@ const handleLogin = async () => {
       isLoggedIn.value = true;
       loginEmailAttempts.value = 0;
       localStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify(studentData.value));
+
+      // SINKRONISASI CLOUD & RESET BERSIH
+      if (!data.existsInResult || !data.progress || Object.keys(data.progress).length === 0) {
+        console.log('[MDS] Data reset terdeteksi dari sheet. Menghapus cache lokal.');
+        studentProgress.value = {};
+        localStorage.removeItem(PROGRESS_STORAGE_KEY);
+        localStorage.removeItem(LEARNING_STATE_STORAGE_KEY);
+        currentStep.value = 0;
+        Object.keys(videoWatchedStatus.value).forEach(k => { videoWatchedStatus.value[k] = false; });
+        Object.keys(courseData).forEach(s => {
+          (courseData[s].quizzes || []).forEach(q => { q.shown = false; });
+        });
+      } else {
+        console.log('[MDS] Restore progress dari Google Sheets:', data.progress);
+        studentProgress.value = { ...studentProgress.value, ...data.progress };
+        if (studentProgress.value['V6_Needs_Ans'] && !studentProgress.value['V6_Q1_Ans']) {
+          studentProgress.value['V6_Q1_Ans'] = studentProgress.value['V6_Needs_Ans'];
+        }
+        if (studentProgress.value['V6_Wants_Ans'] && !studentProgress.value['V6_Q2_Ans']) {
+          studentProgress.value['V6_Q2_Ans'] = studentProgress.value['V6_Wants_Ans'];
+        }
+        if (studentProgress.value['V6_IDE_Code'] && !studentProgress.value['V6_Q3_Ans']) {
+          studentProgress.value['V6_Q3_Ans'] = studentProgress.value['V6_IDE_Code'];
+        }
+        localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(studentProgress.value));
+      }
+
+      nextTick(() => {
+        initializeYouTubePlayer(currentStep.value);
+      });
     } else {
       loginEmailAttempts.value = nextAttempt;
       loginErrorTitle.value = data.needsRfo ? 'Perlu bantuan RFO' : 'Email belum cocok';
@@ -428,6 +462,7 @@ onUnmounted(() => {
 });
 
 const handleLogout = () => {
+  pauseAllMediaExcept(-1);
   localStorage.removeItem(LOGIN_STORAGE_KEY);
   isLoggedIn.value = false;
   loginSchool.value = '';
@@ -443,6 +478,46 @@ const handleLogout = () => {
 };
 
 
+const checkCloudProgressOnMount = async () => {
+  if (!studentData.value.email) return;
+  try {
+    const params = new URLSearchParams({
+      action: 'get_progress',
+      email: studentData.value.email,
+      group: 'gms2b'
+    });
+    const res = await fetch(`${APP_SCRIPT_URL}?${params.toString()}`);
+    const data = await res.json();
+    if (data.success) {
+      if (!data.existsInResult) {
+        console.log('[MDS] Reset admin terdeteksi saat mount. Reset progress lokal.');
+        studentProgress.value = {};
+        localStorage.removeItem(PROGRESS_STORAGE_KEY);
+        localStorage.removeItem(LEARNING_STATE_STORAGE_KEY);
+        currentStep.value = 0;
+        Object.keys(videoWatchedStatus.value).forEach(k => { videoWatchedStatus.value[k] = false; });
+        Object.keys(courseData).forEach(s => {
+          (courseData[s].quizzes || []).forEach(q => { q.shown = false; });
+        });
+      } else if (data.progress && Object.keys(data.progress).length > 0) {
+        studentProgress.value = { ...studentProgress.value, ...data.progress };
+        if (studentProgress.value['V6_Needs_Ans'] && !studentProgress.value['V6_Q1_Ans']) {
+          studentProgress.value['V6_Q1_Ans'] = studentProgress.value['V6_Needs_Ans'];
+        }
+        if (studentProgress.value['V6_Wants_Ans'] && !studentProgress.value['V6_Q2_Ans']) {
+          studentProgress.value['V6_Q2_Ans'] = studentProgress.value['V6_Wants_Ans'];
+        }
+        if (studentProgress.value['V6_IDE_Code'] && !studentProgress.value['V6_Q3_Ans']) {
+          studentProgress.value['V6_Q3_Ans'] = studentProgress.value['V6_IDE_Code'];
+        }
+        localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(studentProgress.value));
+      }
+    }
+  } catch(e) {
+    console.warn('[MDS] Cek progress cloud mount gagal:', e);
+  }
+};
+
 onMounted(() => {
   window.addEventListener('resize', updateWidth);
 
@@ -450,6 +525,7 @@ onMounted(() => {
   if (savedLogin) {
     studentData.value = JSON.parse(savedLogin);
     isLoggedIn.value = true;
+    checkCloudProgressOnMount();
   }
   const savedProgress = localStorage.getItem(PROGRESS_STORAGE_KEY);
   if (savedProgress) {
@@ -713,8 +789,49 @@ const getSeekValue = (stepId) => {
   return duration ? (currentTime / duration * 100) : 0;
 };
 
+// Helper universal pemati media antar-tab & logout
+const pauseAllMediaExcept = (activeStepId) => {
+  const targetId = activeStepId !== undefined && activeStepId !== null ? Number(activeStepId) : -1;
+  
+  // Pause all HTML5 intro videos
+  if (introRefs.value) {
+    Object.keys(introRefs.value).forEach(id => {
+      if (Number(id) !== targetId) {
+        const el = introRefs.value[id];
+        if (el && typeof el.pause === 'function') {
+          try { el.pause(); } catch(e) {}
+        }
+        if (playerStates.value && playerStates.value[id]) {
+          playerStates.value[id].introPlaying = false;
+        }
+      }
+    });
+  }
+
+  // Pause all YouTube players
+  Object.keys(players).forEach(id => {
+    if (Number(id) !== targetId) {
+      if (players[id] && typeof players[id].pauseVideo === 'function') {
+        try { players[id].pauseVideo(); } catch(e) {}
+      }
+      if (playerStates.value && playerStates.value[id]) {
+        playerStates.value[id].isPlaying = false;
+      }
+    }
+  });
+
+  // Clear all timeCheckers except activeStepId
+  Object.keys(timeCheckers).forEach(id => {
+    if (Number(id) !== targetId) {
+      window.clearInterval(timeCheckers[id]);
+      delete timeCheckers[id];
+    }
+  });
+};
+
 // Video actions
 const playIntroThenVideo = async (stepId) => {
+  if (Number(stepId) !== Number(currentStep.value)) return;
   const introEl = introRefs.value[stepId];
   if (introEl && !introPlayed.value[stepId]) {
     playerStates.value[stepId].introPlaying = true;
@@ -732,14 +849,21 @@ const playIntroThenVideo = async (stepId) => {
 };
 
 const onIntroEnded = (stepId) => {
-  playerStates.value[stepId].introPlaying = false;
+  if (playerStates.value[stepId]) {
+    playerStates.value[stepId].introPlaying = false;
+  }
   introPlayed.value[stepId] = true;
   
+  // Guard: Jangan putar YouTube jika siswa sudah berganti tab!
+  if (Number(stepId) !== Number(currentStep.value)) {
+    return;
+  }
+
   const player = players[stepId];
   if (!player || typeof player.getPlayerState !== "function") {
     initializeYouTubePlayer(stepId);
     setTimeout(() => {
-      if (players[stepId] && typeof players[stepId].playVideo === 'function') {
+      if (Number(stepId) === Number(currentStep.value) && players[stepId] && typeof players[stepId].playVideo === 'function') {
          players[stepId].playVideo();
       }
     }, 500);
@@ -749,6 +873,7 @@ const onIntroEnded = (stepId) => {
 };
 
 const playVideo = (stepId) => {
+  if (Number(stepId) !== Number(currentStep.value)) return;
   if (!introPlayed.value[stepId]) {
     playIntroThenVideo(stepId);
     return;
@@ -760,7 +885,7 @@ const playVideo = (stepId) => {
     // YouTube player onReady will not autoplay unless we tell it to,
     // but the player itself is now visible so the user can click it or we can play it if ready.
     setTimeout(() => {
-      if (players[stepId] && typeof players[stepId].playVideo === 'function') {
+      if (Number(stepId) === Number(currentStep.value) && players[stepId] && typeof players[stepId].playVideo === 'function') {
          players[stepId].playVideo();
       }
     }, 500);
@@ -831,6 +956,7 @@ const seekToBookmark = (stepId, time) => {
 
 // YouTube player setup
 const initializeYouTubePlayer = (stepId) => {
+  if (!isLoggedIn.value) return;
   const normalizedStepId = String(stepId);
   if (!youtubeReady.value || players[normalizedStepId] || !courseData[normalizedStepId]) return;
 
@@ -1331,9 +1457,15 @@ const exposeGlobalMethods = () => {
     if (qid === 'V6_Q3') { finalAnsKey = 'V6_IDE_Code'; studentProgress.value['V6_IDE_Att'] = att; }
     
     if (isCorrect) {
-      studentProgress.value[finalAnsKey] = answerStr;
+      studentProgress.value[ansKey] = answerStr;
+      if (finalAnsKey !== ansKey) {
+        studentProgress.value[finalAnsKey] = answerStr;
+      }
     } else if (att >= 3) {
-      studentProgress.value[finalAnsKey] = '0';
+      studentProgress.value[ansKey] = '0';
+      if (finalAnsKey !== ansKey) {
+        studentProgress.value[finalAnsKey] = '0';
+      }
       studentProgress.value[`${qid}_Score`] = 0;
       studentProgress.value[`${qid}_Failed`] = true;
     }
@@ -1756,24 +1888,24 @@ onMounted(() => {
 
   if (window.YT && typeof window.YT.Player === "function") {
     youtubeReady.value = true;
-    initializeYouTubePlayer(currentStep.value);
+    if (isLoggedIn.value) {
+      initializeYouTubePlayer(currentStep.value);
+    }
   } else {
     const oldReady = window.onYouTubeIframeAPIReady;
     window.onYouTubeIframeAPIReady = () => {
       if (oldReady) oldReady();
       youtubeReady.value = true;
-      initializeYouTubePlayer(currentStep.value);
+      if (isLoggedIn.value) {
+        initializeYouTubePlayer(currentStep.value);
+      }
     };
   }
   exposeGlobalMethods();
 });
 
 watch(currentStep, (newStep) => {
-  Object.keys(players).forEach(id => {
-    if (Number(id) !== newStep && players[id] && typeof players[id].pauseVideo === 'function') {
-      players[id].pauseVideo();
-    }
-  });
+  pauseAllMediaExcept(newStep);
 
   if (quizState.value.activeQuizStep !== null && quizState.value.activeQuizStep !== newStep) {
     quizState.value.replayingQuizVideo = false;
@@ -1782,7 +1914,9 @@ watch(currentStep, (newStep) => {
   }
 
   nextTick(() => {
-    initializeYouTubePlayer(newStep);
+    if (isLoggedIn.value) {
+      initializeYouTubePlayer(newStep);
+    }
   });
 });
 
@@ -1810,7 +1944,11 @@ const getStepQuizProgress = (stepId) => {
       const requiredQuestions = (quiz.questions || []).filter(q => q.qid && q.type !== 'info' && q.continueOnly !== true);
       const isCompleted = requiredQuestions.length === 0 || requiredQuestions.every(q => {
         const ans = studentProgress.value[`${q.qid}_Ans`];
-        return ans !== undefined && ans !== null && ans !== '';
+        if (ans !== undefined && ans !== null && ans !== '') return true;
+        if (q.qid === 'V6_Q1' && studentProgress.value['V6_Needs_Ans']) return true;
+        if (q.qid === 'V6_Q2' && studentProgress.value['V6_Wants_Ans']) return true;
+        if (q.qid === 'V6_Q3' && (studentProgress.value['V6_IDE_Code'] || studentProgress.value['V6_IDE_Att'])) return true;
+        return false;
       });
       const isActive = quizState.value.isOpen &&
         Number(quizState.value.activeQuizStep) === Number(stepId) &&
